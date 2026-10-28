@@ -7,6 +7,7 @@ Start from [the documentation index](README.md) and name the contract being chan
 | Domain vocabulary | [CONTEXT.md](../CONTEXT.md) |
 | Confirmed product rules and open decisions | [Design interview](design-session.md) |
 | Accepted consequential decision and rationale | [ADR register](adr/README.md) and its focused record |
+| ADR pictures, exported diagrams, and recordings | [Media convention](assets/README.md) and the matching `assets/adr-NNNN/` folder |
 | Agent delivery process and evidence requirements | [Development workflow](development-workflow.md) |
 | Agent entrypoints and machine prerequisites | [Resume guide](agents/resume.md), [tracker configuration](agents/issue-tracker.md), [skill catalog](agents/skills.md) |
 | Research evidence and proposed technology | The relevant report under `research/`, reached through [the index](README.md) |

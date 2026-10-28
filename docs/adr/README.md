@@ -2,11 +2,28 @@
 
 ADRs preserve consequential choices and their reasoning so future agents do not silently reverse them or reconstruct them from PR history. They complement implementation issues and PR explanations; they are not task plans or a record of every small edit.
 
+## Folder layout
+
+The `adr/` and `assets/` folders are siblings under `docs/`. Each ADR has a media folder named by its stable identifier:
+
+```text
+docs/
+├── adr/
+│   ├── README.md
+│   └── 0001-order-contested-clears-at-the-room-server.md
+└── assets/
+    ├── README.md
+    └── adr-0001/
+        └── .gitkeep
+```
+
+Store an ADR's pictures, exported diagrams, and recordings in `../assets/adr-NNNN/`, and reference them relatively from the record. Create the matching folder with each ADR; use `.gitkeep` while it has no media so a clone preserves the layout. Keep folder identifiers stable when titles change. See [the media convention](../assets/README.md).
+
 ## Register
 
-| ID | Decision | Status | Decision date | Context / delivery |
-| --- | --- | --- | --- | --- |
-| 0001 | [Order contested clears at the room server](0001-order-contested-clears-at-the-room-server.md) | Accepted | 2026-10-29 | [Confirmed rules](../design-session.md), [foundation PR 5](https://github.com/matthew-ngzc/fruit-box/pull/5) |
+| ID | Decision | Status | Decision date | Media | Context / delivery |
+| --- | --- | --- | --- | --- | --- |
+| 0001 | [Order contested clears at the room server](0001-order-contested-clears-at-the-room-server.md) | Accepted | 2026-10-29 | [adr-0001](../assets/adr-0001/) | [Confirmed rules](../design-session.md), [foundation PR 5](https://github.com/matthew-ngzc/fruit-box/pull/5) |
 
 Backend/framework selection and the initial hosting route remain open in [issue 2](https://github.com/matthew-ngzc/fruit-box/issues/2) and [issue 4](https://github.com/matthew-ngzc/fruit-box/issues/4). Research recommendations are not accepted ADRs.
 

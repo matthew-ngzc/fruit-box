@@ -14,3 +14,7 @@ The first valid selection received by the authoritative room server wins contest
 ## Consequences
 
 Immediate, deterministic results suit short matches between friends in Singapore, but lower network latency can help win a close conflict. Acceptance establishes the policy; it does not mean the multiplayer server has been implemented. The backend/runtime and hosting choices remain open. This record is tracked in [the ADR register](README.md).
+
+## Supporting media
+
+Store this decision's pictures and recordings in [its media folder](../assets/adr-0001/). No media is attached yet.

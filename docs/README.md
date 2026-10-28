@@ -13,6 +13,7 @@ Research date: 29 October 2026 (Singapore time). No application implementation h
 9. [Resume on another machine](agents/resume.md): prerequisites, issue/PR context, and repository-contained skills.
 10. [ADR register](adr/README.md): decision status, rationale, ownership, and supersession.
 11. [Documentation maintenance](doc-maintenance.md): owning pages, canonical diagrams, and navigation.
+12. [ADR media](assets/README.md): pictures and recordings in per-ADR folders beside `adr/`.
 
 ## Visual routes
 
