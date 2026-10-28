@@ -28,6 +28,11 @@ body:
     validations:
       required: true
   - type: textarea
+    id: visual-evidence
+    attributes:
+      label: Visual evidence
+      description: For visual work, describe the required evidence and attach screenshots or concise, smooth recordings when available. Reuse the evidence in the PR; trim setup and long idle gaps. State not applicable for changes with no visual effect.
+  - type: textarea
     id: dependencies
     attributes:
       label: Dependencies

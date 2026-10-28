@@ -16,6 +16,7 @@ Every substantive issue includes:
 - Scope and explicit exclusions where needed.
 - Checkable acceptance criteria.
 - Verification method and relevant edge cases.
+- For visual work, the evidence needed to demonstrate the changed appearance or interaction.
 - Blocking dependencies, using native GitHub relationships when available or explicit issue links otherwise.
 - Handoff mode: autonomous after requirements settle, or human decision/review required first.
 
@@ -34,6 +35,19 @@ The PR describes the problem and final behavior for someone who has not read the
 Review against the originating issue and repository instructions, fix actionable findings, and run applicable checks before presenting the PR. Human review and merging are separate steps; do not enable auto-merge or merge without a user instruction.
 
 Use `gh` structured options and body files; attach created PRs to the Codex chat. GitHub remains the authoritative record of ticket and PR status. Local documents hold durable rules, decisions, and evidence rather than a duplicated status board.
+
+## Visual evidence
+
+Visual changes require clear evidence in both the issue and PR. Embed screenshots or a playable screen recording, or link the same accessible media from both places. Planning issues can describe the evidence to capture; attach the actual result when delivering the change.
+
+- Use screenshots for static appearance and before/after comparisons. Keep comparisons at matching viewport sizes and states when practical.
+- Use recordings when interaction, animation, or a sequence of states explains the change better. Prepare the sequence before recording so actions proceed smoothly and go directly to the changed behavior.
+- Keep clips concise. Trim setup, trailing footage, and long idle gaps between actions; do not leave the reviewer waiting through pauses such as 30 seconds of inactivity. Split unrelated demonstrations into separate focused clips.
+- Show the actual implementation being reviewed. Label prototypes and before/after views clearly, identify relevant device/viewport context, and add a short caption explaining what the reviewer should observe.
+- Preserve real-time behavior when evidence supports a timing, latency, or smoothness claim. Label cuts or speed changes that affect interpretation; editing must not conceal the behavior being evaluated.
+- Review the screenshots or play back the clip before posting. Check readability, media access, and whether the changed behavior is clearly visible. Keep credentials and unrelated private content out of the capture.
+
+If the required runtime or capture capability is unavailable, state the missing evidence explicitly and keep visual verification pending. Source inspection and automated tests do not substitute for visual evidence. Changes without a visual effect can mark this evidence requirement not applicable.
 
 ## Initial work map
 
