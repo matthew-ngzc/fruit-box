@@ -39,7 +39,7 @@ Use `gh pr checks <number> --watch` for a PR and `gh run list --workflow ci.yml`
 
 Locally, run the same commands from the README: `python scripts/check_agent_setup.py` and `python -m unittest discover -s tests -p 'test_*.py'` (use `python3` where appropriate). Actual GitHub run evidence validates the hosted environment; local success alone does not prove every runner or workflow event succeeded.
 
-The current CI change is stacked on foundation PR 5, which supplies its scripts and tests. Merge PR 5 first and then retarget/rebase the CI PR onto main; do not merge the CI PR into the foundation branch. Retest the resulting integration before merging.
+The CI change depends on the foundation's scripts and tests. Follow [stacked PR delivery](development-workflow.md#stacked-pr-delivery) to preserve a focused diff, land prerequisites first, and recheck the resulting integration after retargeting/restacking. The live dependency map belongs in the PR descriptions.
 
 ## References
 

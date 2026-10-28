@@ -19,6 +19,7 @@ Research date: 29 October 2026 (Singapore time). No application implementation h
 ## Visual routes
 
 - [Delivery and evidence loop](development-workflow.md#detailed-review-contract).
+- [Stacked PR dependencies and restacking](development-workflow.md#stacked-pr-delivery).
 - [ADR lifecycle](adr/README.md#when-and-how-to-record-a-decision).
 - [Proposed system components](research/architecture-and-modes.md#proposed-components); the stack is not accepted yet.
 - [CI gates and future deployment boundary](ci-cd.md#implemented-ci).
