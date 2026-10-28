@@ -15,7 +15,7 @@ class AgentSetupTests(unittest.TestCase):
         self.addCleanup(self.directory.cleanup)
         self.root = Path(self.directory.name)
         for relative in (
-            "AGENTS.md", "CLAUDE.md", "CONTEXT.md", "docs/design-session.md",
+            "README.md", "AGENTS.md", "CLAUDE.md", "CONTEXT.md", "docs/design-session.md",
             "docs/development-workflow.md", "docs/agents/resume.md",
             "docs/agents/issue-tracker.md", "docs/agents/skills.md",
             ".agents/skills/UPSTREAM-LICENSE.txt", ".agents/skills/NOTICE.md",
@@ -40,6 +40,14 @@ class AgentSetupTests(unittest.TestCase):
     def test_missing_catalog_skill_is_reported(self):
         self.write("docs/agents/skills.md", "| `example` | Fixture |\n| `missing` | Required |\n")
         self.assertIn("Missing catalog skill: missing", CHECK(self.root))
+
+    def test_root_readme_references_are_checked(self):
+        self.write("README.md", "Start with [the guide](missing-resume.md).\n")
+        self.assertIn("Broken reference in README.md: missing-resume.md", CHECK(self.root))
+
+    def test_unsupported_invocation_frontmatter_is_reported(self):
+        self.write(".agents/skills/example/SKILL.md", "---\nname: example\ndescription: Fixture\ndisable-model-invocation: true\n---\n")
+        self.assertTrue(any(error.startswith("Unsupported invocation frontmatter:") for error in CHECK(self.root)))
 
     def test_machine_specific_dependency_is_reported(self):
         self.write("AGENTS.md", "Read C:/Users/someone/private/SKILL.md before starting.\n")

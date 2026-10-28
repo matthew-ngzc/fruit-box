@@ -9,7 +9,7 @@ from urllib.parse import unquote, urlsplit
 def check(root: Path) -> list[str]:
     errors = []
     required = (
-        "AGENTS.md", "CLAUDE.md", "CONTEXT.md", "docs/design-session.md",
+        "README.md", "AGENTS.md", "CLAUDE.md", "CONTEXT.md", "docs/design-session.md",
         "docs/development-workflow.md", "docs/agents/resume.md",
         "docs/agents/issue-tracker.md", "docs/agents/skills.md",
         ".agents/skills/UPSTREAM-LICENSE.txt", ".agents/skills/NOTICE.md",
@@ -37,10 +37,12 @@ def check(root: Path) -> list[str]:
         description = re.search(r"^description:\s*\S", header[1], re.M)
         if not name or name[1] != skill.parent.name or not description:
             errors.append(f"Invalid skill name/description: {skill.relative_to(root)}")
+        if re.search(r"^disable-model-invocation:", header[1], re.M):
+            errors.append(f"Unsupported invocation frontmatter: {skill.relative_to(root)}; use agents/openai.yaml")
         if not (skill.parent / "agents/openai.yaml").is_file():
             errors.append(f"Missing skill invocation metadata: {skill.parent.name}")
 
-    markdown = [root / "AGENTS.md", root / "CLAUDE.md", root / "CONTEXT.md"]
+    markdown = [root / "README.md", root / "AGENTS.md", root / "CLAUDE.md", root / "CONTEXT.md"]
     markdown += sorted((root / "docs").rglob("*.md"))
     markdown += sorted((root / ".agents/skills").rglob("*.md"))
     for document in markdown:
