@@ -19,6 +19,7 @@ Updated: 29 October 2026 (Asia/Singapore).
 - TypeScript is acceptable, but the backend language is not settled. The user knows Java 8 and is interested in modern Java; Python is also an option, and Rust is unfamiliar but of interest for agent-assisted development.
 - The offline research solver is deferred until after the main game.
 - Separate-board races, asynchronous challenges, and shared-board cooperation remain ideas for later exploration.
+- CI/CD is required. The owner chose automatic deployment after reviewed changes merge to main and CI passes, while deferring the hosting decision. ADR 0002 records this policy; application delivery remains unimplemented until the stack, host and build are ready.
 
 ## Decision tree
 

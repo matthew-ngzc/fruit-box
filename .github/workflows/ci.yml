@@ -1,22 +1,31 @@
-name: Agent context
+name: CI
 
 on:
   push:
+    branches: [main]
   pull_request:
+  workflow_dispatch:
 
 permissions:
   contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 jobs:
   check:
     name: Agent setup (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
     steps:
       - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
       - uses: actions/setup-python@v7.1.0
         with:
           python-version: '3.13'
@@ -24,3 +33,15 @@ jobs:
         run: python scripts/check_agent_setup.py
       - name: Check validator behavior
         run: python -m unittest discover -s tests -p 'test_*.py'
+
+  required:
+    name: Required checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs: [check]
+    if: ${{ always() }}
+    steps:
+      - name: Require every matrix job to succeed
+        env:
+          MATRIX_RESULT: ${{ needs.check.result }}
+        run: test "$MATRIX_RESULT" = success
