@@ -11,5 +11,13 @@ Research date: 29 October 2026 (Singapore time). No application implementation h
 7. [Language and runtime options](research/technology-options.md): TypeScript/Node, modern Java, Python, Rust, and the learning-versus-delivery trade-off.
 8. [Development workflow](development-workflow.md): GitHub issues and PRs, vertical slices, behavior tests, review, and handoff expectations.
 9. [Resume on another machine](agents/resume.md): prerequisites, issue/PR context, and repository-contained skills.
+10. [ADR register](adr/README.md): decision status, rationale, ownership, and supersession.
+11. [Documentation maintenance](doc-maintenance.md): owning pages, canonical diagrams, and navigation.
+
+## Visual routes
+
+- [Delivery and evidence loop](development-workflow.md#detailed-review-contract).
+- [ADR lifecycle](adr/README.md#when-and-how-to-record-a-decision).
+- [Proposed system components](research/architecture-and-modes.md#proposed-components); the stack is not accepted yet.
 
 [CONTEXT.md](../CONTEXT.md) contains the game's domain glossary. Source links in the reports point to the inspected upstream commit; no upstream application code is included in these deliverables.

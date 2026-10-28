@@ -12,10 +12,12 @@ When resuming on another machine, start with `docs/agents/resume.md`. Relevant s
 - Shape work into small vertical slices with a demonstrable outcome. Each issue states the problem, scope, acceptance criteria, verification, dependencies, and whether a human decision is needed before implementation.
 - Read the issue and its dependencies before starting. Resolve open product or architecture decisions through the design interview; keep dependent implementation blocked until its requirements are settled.
 - Use a focused branch and PR for a cohesive issue. Link the issue, explain the resulting behavior, and report the checks actually performed. Use `--body-file` for multiline GitHub issue and PR bodies.
+- Follow the detailed PR contract in `docs/development-workflow.md`: explain significance, scope/dependencies, trade-offs, changelog, per-commit walkthroughs with precise links, evidence, documentation, and reviewer focus. Keep a draft current as commits land; mark it ready when its own scope and evidence are complete.
 - For visual changes, include clear screenshots or concise screen recordings in both the issue and PR, reusing media links where practical. Follow the visual-evidence guidance in `docs/development-workflow.md`; recordings must show smooth, direct actions without long idle gaps.
 - Use behavior-first TDD for engine and multiplayer behavior. Cover meaningful boundaries such as competing clears, duplicate delivery, deadlines, pauses, and reconnects. Match verification to the change; documentation-only changes do not require application tests.
 - Before submitting a PR, review its diff against the issue, confirmed rules, and these instructions. Resolve findings and run applicable checks. Keep the PR open for human review; merge only when the user requests it.
 - After creating a PR, attach it to the current Codex chat. Keep GitHub issue/PR status current as scope or blockers change.
+- Track consequential decisions in `docs/adr/README.md`; proposed choices become accepted only through an explicit user decision. Follow `docs/doc-maintenance.md` to update owning prose, adjacent diagrams, and navigation together.
 
 ## Public repository
 

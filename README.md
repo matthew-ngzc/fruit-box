@@ -15,7 +15,7 @@ Use [GitHub Issues](https://github.com/matthew-ngzc/fruit-box/issues) for agreed
 - [Research index](docs/README.md)
 - [Confirmed rules and open decisions](docs/design-session.md)
 - [Domain glossary](CONTEXT.md)
-- [Architecture decisions](docs/adr/0001-order-contested-clears-at-the-room-server.md)
+- [Architecture decision register](docs/adr/README.md)
 
 The portable documentation/agent-setup checks use Python 3's standard library:
 

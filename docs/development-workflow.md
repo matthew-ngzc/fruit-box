@@ -36,6 +36,33 @@ Review against the originating issue and repository instructions, fix actionable
 
 Use `gh` structured options and body files; attach created PRs to the Codex chat. GitHub remains the authoritative record of ticket and PR status. Local documents hold durable rules, decisions, and evidence rather than a duplicated status board.
 
+### Detailed review contract
+
+Use the owner's Cooking Spree PRs as the style reference: [PR 6's behavior, trade-offs and evidence](https://github.com/matthew-ngzc/Cooking-Spree/pull/6), its [focused save-flow commit walkthrough](https://github.com/matthew-ngzc/Cooking-Spree/pull/6#issuecomment-5984709101), and [PR 3's maintained-diagram approach](https://github.com/matthew-ngzc/Cooking-Spree/pull/3). Adapt the presentation to Fruit Box; Android constraints and model-specific delegation policies are not this project's requirements.
+
+Open a draft once the first reviewable commit is available and maintain it as work proceeds. Each PR explains the outcome and why it matters, assigned scope and dependencies, material decisions/alternatives/trade-offs, a behavior-grouped changelog, verification, visual evidence, documentation/ADR updates, deferrals, and reviewer focus. Details should make the result reviewable without checking out the branch; explain the final implementation rather than narrating abandoned attempts.
+
+For each coherent commit, add an inline walkthrough or link to one in a PR comment. Record the SHA/title, significance and resulting behavior, a concrete scenario or diagram when useful, representative changed-line links, and verification/evidence. Prefer immutable commit-pinned file/line links or precise PR diff anchors; a list of filenames alone is insufficient. Update links and dependency claims after rebasing or restacking.
+
+Flow, state, ownership, failure-handling, or architecture changes need a focused Mermaid diagram when it clarifies the contract. Keep the maintained copy beside the owning prose, route it from the documentation index, and link/embed it in the walkthrough. See [documentation maintenance](doc-maintenance.md) and the [ADR register](adr/README.md). Use diagrams to explain relationships and screenshots/recordings to demonstrate actual visual behavior; one does not replace the other.
+
+Mark the PR ready when its assigned scope, walkthroughs, documentation, and applicable evidence are complete. Later work assigned elsewhere does not keep it in draft. Explicitly record unavailable checks and their effect on acceptance; a required unverified outcome remains pending. PR readiness, passing CI, and checked progress boxes do not imply user acceptance of an ADR or authorization to merge.
+
+```mermaid
+flowchart TD
+    Work[Agreed issue and scope] --> Commit[Coherent commit]
+    Commit --> Draft[Update draft PR walkthrough]
+    Draft --> Explain[Explain behavior and trade-offs]
+    Draft --> Evidence[Link checks and visual evidence]
+    Draft --> Docs[Update owning prose, diagrams and ADR register]
+    Explain --> Gate{Assigned work and required evidence complete?}
+    Evidence --> Gate
+    Docs --> Gate
+    Gate -->|No| Commit
+    Gate -->|Yes| Review[Ready for human review]
+    Review --> Merge[Merge only on user instruction]
+```
+
 ## Visual evidence
 
 Visual changes require clear evidence in both the issue and PR. Embed screenshots or a playable screen recording, or link the same accessible media from both places. Planning issues can describe the evidence to capture; attach the actual result when delivering the change.
@@ -43,6 +70,8 @@ Visual changes require clear evidence in both the issue and PR. Embed screenshot
 - Use screenshots for static appearance and before/after comparisons. Keep comparisons at matching viewport sizes and states when practical.
 - Use recordings when interaction, animation, or a sequence of states explains the change better. Prepare the sequence before recording so actions proceed smoothly and go directly to the changed behavior.
 - Keep clips concise. Trim setup, trailing footage, and long idle gaps between actions; do not leave the reviewer waiting through pauses such as 30 seconds of inactivity. Split unrelated demonstrations into separate focused clips.
+- Stage the scenario before capture and use a continuous controller with condition-based waits when practical. Match the Cooking Spree pacing: first meaningful input within two seconds, no unexplained idle gap over three seconds, and hold the final result for one to two seconds. Explain naturally slow operations when their duration is part of the evidence.
+- Make touch/click inputs visible when the capture method supports it, and identify the device, browser and viewport. Capture internal app audio when sound changes or helps demonstrate the result; keep microphone audio off unless intentional narration is requested, and disclose unavailable audio capture.
 - Show the actual implementation being reviewed. Label prototypes and before/after views clearly, identify relevant device/viewport context, and add a short caption explaining what the reviewer should observe.
 - Preserve real-time behavior when evidence supports a timing, latency, or smoothness claim. Label cuts or speed changes that affect interpretation; editing must not conceal the behavior being evaluated.
 - Review the screenshots or play back the clip before posting. Check readability, media access, and whether the changed behavior is clearly visible. Keep credentials and unrelated private content out of the capture.
