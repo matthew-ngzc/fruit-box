@@ -44,6 +44,20 @@ it('accepts a stale submission when its intended fruit is unchanged', () => {
   expect(match.players.a.score).toBe(2);
   expect(match.players.b.score).toBe(2);
 });
+
+it('ignores repeat pauses and rejects clears while paused without ending a no-moves board', () => {
+  const match = new Match([4, 6], ['a', 'b'], 0, 2);
+  match.command('a', { type: 'pause', id: 1 }, 1);
+  expect(match.command('b', { type: 'pause', id: 1 }, 2).ok).toBe(false);
+  expect(match.players.b.pauses).toBe(2);
+  expect(match.command('b', { type: 'clear', id: 2, top: 0, left: 0, bottom: 1, right: 2, fruit: [0, 1] }, 3).ok).toBe(false);
+  expect(match.board).toEqual([4, 6]);
+  const blocked = new Match([9, 9], ['a', 'b'], 0, 2);
+  blocked.tick(119999);
+  expect(blocked.phase).toBe('playing');
+  blocked.tick(120000);
+  expect(blocked.phase).toBe('finished');
+});
 it('freezes active time during pause and resumes after 30 seconds or both ready', () => {
   const match = new Match([4, 6], ['a', 'b'], 0, 2);
   expect(match.command('a', { type: 'pause', id: 1 }, 1000).ok).toBe(true);

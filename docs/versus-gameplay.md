@@ -33,3 +33,14 @@ stateDiagram-v2
 Tests use the previously approved pure-rules and real-Colyseus-client interfaces: competing clears, duplicate delivery, stale non-overlapping clears, invalid rectangles, deadlines, empty boards/draws, pause budgets/expiry/early resume, synchronized readiness and actual drop/reconnect preserving identity and score. The browser is manually automated through real pointer inputs and refresh; screenshots/recording are linked in the issue/PR. Desktop/mobile viewport checks are distinct from physical-device acceptance.
 
 The implementation is an initial local playable preview. Hosting, deployment, persistent results, accounts, automatic rematches and a solo browser mode are not included. Existing pure solo rules remain available. Required actual-phone evidence remains pending in issue 3; keep that limitation visible when reviewing the UI.
+
+
+## Captured browser evidence
+
+Desktop Chrome at 1000px and mobile viewport at 390×844: real pointer clear and synchronized score, pause hiding on both guests, both-ready resume, refresh/rejoin preserving score, actual 120-second active deadline and winner, plus explicit-invite/new-room navigation. These are browser viewport checks, not physical-phone acceptance.
+
+![Shared board](assets/versus-playing.png)
+![Clear credited](assets/versus-cleared.png)
+![Paused mobile viewport](assets/versus-mobile-paused.png)
+![Rejoined mobile viewport](assets/versus-mobile-rejoined.png)
+![Actual match result](assets/versus-finished.png)
