@@ -19,6 +19,7 @@ flowchart TD
     PR[Pull request] --> Matrix[Linux, macOS and Windows context and application checks]
     Manual[Manual run after workflow reaches default branch] --> Matrix
     PR --> Container[Linux Docker build and lifecycle]
+    Manual --> Container
     Matrix --> Gate{Every required check succeeded?}
     Container --> Gate
     Gate -->|No| Stop[CI fails]

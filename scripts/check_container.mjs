@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { Client } from '@colyseus/sdk';
 
 const url = process.env.FRUIT_BOX_TEST_URL ?? 'http://127.0.0.1:2567';
-for (const [path, expected] of [['/', 'Fruit Box'], ['/app.js', ''], ['/style.css', ''], ['/third-party-license', 'MIT License']]) {
+for (const [path, expected] of [['/', 'Fruit Box'], ['/app.js', 'Waiting for server confirmation'], ['/style.css', '#board'], ['/third-party-license', 'MIT License']]) {
   const response = await fetch(new URL(path, url), { signal: AbortSignal.timeout(5000) });
   assert.equal(response.status, 200, path);
   assert.ok((await response.text()).includes(expected), path);
