@@ -34,4 +34,6 @@ Research date: 29 October 2026 (Singapore time). The TypeScript/Colyseus browser
 
 [Local Docker server controls](local-docker.md): Docker Desktop visibility, start/stop/status/logs and container verification.
 
-[Mobile interaction preview](mobile-interaction.md): hybrid box/apple selection, touch zoom, landscape layout and fullscreen capability limits.
+[Mobile interaction preview](mobile-interaction.md): free-box center selection, landscape layout and fullscreen capability limits.
+
+[Solo play preview](solo-play.md): one-player entry, shared match/interface rules, mode-specific display and verification.

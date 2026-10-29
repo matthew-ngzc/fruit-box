@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createCertifiedBoard, clearSelection, inspectSelection } from '../../src/rules.js';
+import { createCertifiedBoard, clearSelection, inspectSelection, inspectRectangle } from '../../src/rules.js';
 
 describe('certified boards', () => {
   it.each([1, 42, 4294967295])('can clear every fruit by replaying certified rectangles (seed %i)', seed => {
@@ -14,6 +14,20 @@ describe('certified boards', () => {
     }
     expect(board.filter(fruit => fruit.active)).toHaveLength(0);
   });
+});
+
+it('includes only fruit centers strictly inside a free rectangle', () => {
+  const centers = [
+    { id: 0, x: 0, y: 5, value: 4 },
+    { id: 1, x: 10, y: 5, value: 6 },
+    { id: 2, x: 5, y: 0, value: 3 },
+    { id: 3, x: 5, y: 10, value: 7 },
+    { id: 4, x: 5, y: 5, value: 8 },
+    { id: 5, x: 6, y: 6, value: 0 },
+  ];
+  expect(inspectRectangle(centers, { top: 0, left: 0, bottom: 10, right: 10 })).toEqual({ fruit: [4], sum: 8 });
+  expect(inspectRectangle(centers, { top: 4.9, left: 4.9, bottom: 5.1, right: 5.1 })).toEqual({ fruit: [4], sum: 8 });
+  expect(inspectRectangle(centers, { top: 5, left: 5, bottom: 5, right: 5 })).toEqual({ fruit: [], sum: 0 });
 });
 
 it('rejects a non-ten rectangle and credits fruit count for a valid clear', () => {

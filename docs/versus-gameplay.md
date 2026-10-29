@@ -6,7 +6,7 @@ This extends [private rooms](versus-rooms.md) with a browser match. Run `npm ci`
 
 ## Play
 
-Drag a rectangle in either direction, or tap/click two opposite cells; keyboard users can focus and activate the two corners. Remaining fruit must total ten. The pending rectangle stays highlighted until the server confirms or rejects; scores count fruit, not values. Only committed board changes are shared. Nicknames are inserted as text, never HTML. The owner reported two-player play working on Android Brave, while requesting better selection visibility and landscape. The [mobile interaction preview](mobile-interaction.md) adds an enclosing box, off-finger sum, optional touch zoom and landscape controls; revised physical-device acceptance remains in issue 3.
+Draw a free rectangle in either direction and release. Only active fruit whose rendered centers are strictly inside it count; the whole fruit need not fit. The drawn box and apple highlights agree, and a nearby badge shows the sum. A tap does not establish a corner; no snapping, alternate selection or touch zoom remains. Pending confirmation keeps the box visible until the server responds. See [mobile interaction](mobile-interaction.md) for input lifecycle/fullscreen details. The same interface is available in [solo play](solo-play.md). The owner reported Android Brave two-player/fullscreen success, while revised physical-device acceptance remains open.
 
 ## Authority and recovery
 
@@ -34,7 +34,7 @@ stateDiagram-v2
 
 Tests use the previously approved pure-rules and real-Colyseus-client interfaces: competing clears, duplicate delivery, stale non-overlapping clears, invalid rectangles, deadlines, empty boards/draws, pause budgets/expiry/early resume, synchronized readiness and actual drop/reconnect preserving identity and score. The browser is manually automated through real pointer inputs and refresh; screenshots/recording are linked in the issue/PR. Desktop/mobile viewport checks are distinct from physical-device acceptance.
 
-The implementation is an initial local playable preview. Hosting, deployment, persistent results, accounts, automatic rematches and a solo browser mode are not included. Existing pure solo rules remain available. Required actual-phone evidence remains pending in issue 3; keep that limitation visible when reviewing the UI.
+The implementation is an initial local playable preview. Hosting, deployment, persistent results, accounts, automatic rematches are not included. A [solo browser preview](solo-play.md) is now available. Existing pure solo rules remain available. Required actual-phone evidence remains pending in issue 3; keep that limitation visible when reviewing the UI.
 
 
 ## Captured browser evidence

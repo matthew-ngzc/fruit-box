@@ -23,27 +23,8 @@
   box-shadow: 0 2px 6px #342d2630;
 }
 #box-sum.valid { background: #285c3d; }
-.touch-option { display: inline-flex; align-items: center; gap: 6px; margin: 0; font: 12px system-ui; }
-.touch-option input { width: 18px; height: 18px; margin: 0; accent-color: #285c3d; }
 .tools #view-hint { flex-basis: 100%; font-size: 12px; line-height: 1.4; }
 .tools #view-hint:empty { display: none; }
-#touch-preview {
-  position: fixed;
-  z-index: 20;
-  width: 118px;
-  border: 2px solid #28553e;
-  border-radius: 9px;
-  padding: 7px;
-  background: #fffaf0;
-  box-shadow: 0 3px 15px #342d2630;
-  pointer-events: none;
-}
-#touch-preview > span { display: block; margin-bottom: 5px; font: 10px system-ui; text-align: center; }
-#preview-cells { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3px; }
-#preview-cells span { display: grid; place-items: center; aspect-ratio: 1; border-radius: 5px; background: #eee6d6; color: #342d26; font: 700 17px system-ui; }
-#preview-cells .chosen { background: #f2c16b; }
-#preview-cells .endpoint { outline: 2px solid #28553e; outline-offset: -2px; }
-
 /* Keep the whole 17 x 10 board visible in short landscape phone viewports. */
 @media (orientation: landscape) and (max-height: 600px) {
   body.has-game { min-height: 100dvh; }
@@ -69,7 +50,6 @@
   .tools { grid-column: 2; grid-row: 3; margin: 0; flex-direction: column; flex-wrap: nowrap; gap: 5px; align-items: stretch; min-height: 0; }
   .tools #selection { width: 100%; font-size: 11px; line-height: 1.3; margin: 0; }
   .tools button { min-height: 33px; padding: 5px 8px; font-size: 11px; }
-  .tools .touch-option { font-size: 10px; min-height: 22px; }
   .tools #view-hint { display: none; }
   .room-line { grid-column: 2; grid-row: 4; border: 0; padding: 0; flex-wrap: wrap; gap: 2px 6px; font-size: 9px; }
   .room-line button { font-size: 9px; min-height: 24px; padding: 3px 5px; }
@@ -86,4 +66,16 @@
   .score small { font-size: 8px; margin-top: 1px; }
   .tools { gap: 4px; }
   .tools button { min-height: 30px; padding: 3px 6px; }
+}
+
+/* Free selection: fruit is display content, not a second interaction mode. */
+.fruit { display: grid; place-items: center; }
+#solo { width: 100%; margin-top: 10px; border-color: #38624e; color: #28553e; }
+#room-invite { display: inline-flex; align-items: center; gap: 12px; }
+@media (orientation: landscape) and (max-height: 600px) {
+  #game[data-mode="solo"] { grid-template-rows: 44px 62px minmax(0, 1fr) 44px; }
+  #room-invite { display: contents; }
+}
+@media (orientation: landscape) and (max-height: 360px) {
+  #game[data-mode="solo"] { grid-template-rows: 32px 42px minmax(0, 1fr) 44px; }
 }

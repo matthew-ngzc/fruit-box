@@ -3,16 +3,17 @@ import { createCertifiedBoard } from './rules.js';
 import { RoomState, Player } from './state.js';
 import { Match } from './match.js';
 
-export class VersusRoom extends Room<{ state: RoomState }> {
+export class GameRoom extends Room<{ state: RoomState }> {
   maxClients = 2;
   state = new RoomState();
   private match?: Match;
-  private reconnections = new Map<string, ReturnType<VersusRoom['allowReconnection']>>();
+  private reconnections = new Map<string, ReturnType<GameRoom['allowReconnection']>>();
   private ended = false;
 
   async onCreate(options: unknown) {
     nicknameFrom(options);
     await this.setPrivate(true);
+    this.state.mode = this.maxClients === 1 ? 'solo' : 'versus';
     // Construct once before play; never generate or solve on a clear command.
     const { board } = createCertifiedBoard();
     this.state.board.push(...board.map(fruit => fruit.value));
@@ -20,7 +21,7 @@ export class VersusRoom extends Room<{ state: RoomState }> {
       if (this.match) return;
       const player = this.state.players.get(client.sessionId);
       if (player) player.ready = true;
-      if (this.state.players.size === 2 && [...this.state.players.values()].every(player => player.ready)) {
+      if (this.state.players.size === this.maxClients && [...this.state.players.values()].every(player => player.ready)) {
         this.match = new Match([...this.state.board], [...this.state.players.keys()], performance.now());
         this.autoDispose = false;
         void this.lock();
@@ -29,7 +30,7 @@ export class VersusRoom extends Room<{ state: RoomState }> {
       this.broadcastPatch();
     });
     this.onMessage('command', (client, command: unknown) => {
-      const result = this.match?.command(client.sessionId, command, performance.now()) ?? { ok: false, reason: 'Both players must be ready' };
+      const result = this.match?.command(client.sessionId, command, performance.now()) ?? { ok: false, reason: 'All players must be ready' };
       this.sync();
       const id = command && typeof command === 'object' && 'id' in command ? command.id : null;
       client.send('result', { ...result, id });
@@ -88,6 +89,10 @@ export class VersusRoom extends Room<{ state: RoomState }> {
       this.clock.setTimeout(() => { void this.disconnect(); }, 60000);
     }
   }
+}
+
+export class SoloRoom extends GameRoom {
+  override maxClients = 1;
 }
 
 function nicknameFrom(options: unknown): string {
