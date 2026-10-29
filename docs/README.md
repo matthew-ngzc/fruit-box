@@ -28,3 +28,6 @@ Research date: 29 October 2026 (Singapore time). The first TypeScript/Colyseus r
 - [CI gates and future deployment boundary](ci-cd.md#implemented-ci).
 
 [CONTEXT.md](../CONTEXT.md) contains the game's domain glossary. Source links in the reports point to the inspected upstream commit; the first implementation vendors the pinned MIT engine with [provenance](../vendor/fruit-box-game/README.md).
+
+
+[Playable versus contract and state diagram](versus-gameplay.md) · [Upstream licensing](licensing.md)

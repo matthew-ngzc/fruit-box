@@ -26,3 +26,6 @@ python3 -m unittest discover -s tests -p 'test_*.py'
 ```
 
 On Windows, `python` may be the executable name. Use Node 22.12+ and run `npm ci`, `npm test`, `npm run typecheck`, `npm run build` and `npm run demo` for the room server. Credentials and private infrastructure access are configured on each machine, not stored in this public repository. Imported skill licensing is documented in [the skill notice](.agents/skills/NOTICE.md).
+
+
+[Playable versus setup](docs/versus-gameplay.md) · [Upstream licensing](docs/licensing.md)

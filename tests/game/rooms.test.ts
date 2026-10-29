@@ -3,6 +3,16 @@ import { Client, type Room } from '@colyseus/sdk';
 import { startServer } from '../../src/app.js';
 import type { RoomState } from '../../src/state.js';
 
+function findClear(values: number[]) {
+  for (let top = 0; top < 10; top++) for (let left = 0; left < 17; left++)
+    for (let bottom = top + 1; bottom <= 10; bottom++) for (let right = left + 1; right <= 17; right++) {
+      const fruit: number[] = [];
+      for (let row = top; row < bottom; row++) for (let col = left; col < right; col++) if (values[row * 17 + col]) fruit.push(row * 17 + col);
+      if (fruit.reduce((sum, id) => sum + values[id], 0) === 10) return { top, left, bottom, right, fruit };
+    }
+  throw new Error('Initial certified board has no clear');
+}
+
 let running: Awaited<ReturnType<typeof startServer>>;
 const rooms: Room<RoomState>[] = [];
 const connect = (room: Room<RoomState>) => { rooms.push(room); return room; };
@@ -72,4 +82,53 @@ it('does not admit guests by public room-name matching', async () => {
   const sdk = new Client(running.url);
   connect(await sdk.create<RoomState>('versus', { nickname: 'Private' }));
   await expect(sdk.join('versus', { nickname: 'Uninvited' })).rejects.toThrow();
+});
+
+it('starts only after both guests ready and synchronizes a confirmed clear', async () => {
+  const sdk = new Client(running.url);
+  const first = connect(await sdk.create<RoomState>('versus', { nickname: 'Alice' }));
+  const second = connect(await sdk.joinById<RoomState>(first.roomId, { nickname: 'Bob' }));
+  await waitFor(second, () => second.state?.players?.size === 2);
+  first.send('ready');
+  await waitFor(first, () => first.state?.players?.get(first.sessionId)?.ready === true);
+  expect(first.state.phase).toBe('waiting');
+  second.send('ready');
+  await waitFor(first, () => first.state.phase === 'playing');
+  expect(first.state.remainingMs).toBeGreaterThan(119000);
+  first.send('command', { type: 'pause', id: 1 });
+  await waitFor(second, () => second.state.phase === 'paused');
+  expect(second.state.players.get(first.sessionId)?.pauses).toBe(1);
+  first.send('command', { type: 'resume', id: 2 });
+  second.send('command', { type: 'resume', id: 1 });
+  await waitFor(second, () => second.state.phase === 'playing');
+});
+
+it('arbitrates conflicting network clears once and restores identity/score after a drop', async () => {
+  const sdk = new Client(running.url);
+  const a = connect(await sdk.create<RoomState>('versus', { nickname: 'A' }));
+  const b = connect(await sdk.joinById<RoomState>(a.roomId, { nickname: 'B' }));
+  await waitFor(b, () => b.state?.players?.size === 2);
+  a.send('ready'); b.send('ready');
+  await waitFor(a, () => a.state.phase === 'playing');
+  const clear = { ...findClear([...a.state.board]), type: 'clear', id: 1 };
+  const result = new Promise<{ ok: boolean }>(resolve => a.onMessage('result', resolve));
+  a.send('command', clear);
+  expect((await result).ok).toBe(true);
+  await waitFor(b, () => b.state.players.get(a.sessionId)?.score === clear.fruit.length);
+  const rejected = new Promise<{ ok: boolean }>(resolve => b.onMessage('result', resolve));
+  b.send('command', clear);
+  expect((await rejected).ok).toBe(false);
+  a.send('command', clear);
+  const token = a.reconnectionToken;
+  const session = a.sessionId;
+  a.reconnection.enabled = false;
+  await a.leave(false);
+  await waitFor(b, () => b.state.players.get(session)?.connected === false);
+  const before = b.state.remainingMs;
+  const recovered = connect(await sdk.reconnect<RoomState>(token));
+  await waitFor(recovered, () => recovered.state?.players?.get(session)?.connected === true);
+  expect(recovered.sessionId).toBe(session);
+  expect(recovered.state.players.get(session)?.score).toBe(clear.fruit.length);
+  expect(recovered.state.remainingMs).toBeLessThanOrEqual(before);
+  expect(recovered.state.board.toJSON()).toEqual(b.state.board.toJSON());
 });
