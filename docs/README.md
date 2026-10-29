@@ -31,3 +31,5 @@ Research date: 29 October 2026 (Singapore time). The TypeScript/Colyseus browser
 
 
 [Playable versus contract and state diagram](versus-gameplay.md) · [Upstream licensing](licensing.md)
+
+[Local Docker server controls](local-docker.md): Docker Desktop visibility, start/stop/status/logs and container verification.

@@ -1,0 +1,9 @@
+name: fruit-box
+services:
+  game:
+    build: .
+    ports:
+      - "${FRUIT_BOX_BIND:-0.0.0.0}:${FRUIT_BOX_PORT:-2567}:2567"
+    init: true
+    restart: "no"
+    stop_grace_period: 10s

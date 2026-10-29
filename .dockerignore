@@ -1,0 +1,17 @@
+*
+!Dockerfile
+!package.json
+!package-lock.json
+!tsconfig.json
+!vitest.config.ts
+!src/
+!src/**
+!scripts/
+!scripts/room-demo.ts
+!tests/
+!tests/game/
+!tests/game/**
+!vendor/
+!vendor/**
+!web/
+!web/**

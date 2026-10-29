@@ -1,5 +1,7 @@
 # Playable shared-board competition
 
+For a server you can see and stop in Docker Desktop, follow [local Docker setup](local-docker.md). The native Node commands below remain available.
+
 This extends [private rooms](versus-rooms.md) with a browser match. Run `npm ci`, `npm run build`, then `npm start`, and open http://127.0.0.1:2567 in two browser sessions. Create a room with a nickname and share its link/code. Both guests choose **I'm ready** to start. For another match, create a new room. Hosting and public HTTPS/WSS remain issue 4/7. Running from the repository root is required because the server serves the browser files from web/ and dist/web/.
 
 ## Play
