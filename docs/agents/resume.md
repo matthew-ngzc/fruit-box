@@ -21,7 +21,7 @@ The repository is the durable context. A desktop chat, a global skill installati
 
 ## Current state
 
-A TypeScript/Node/Colyseus browser versus match is implemented locally; see [gameplay setup](../versus-gameplay.md). Physical-phone acceptance and hosting remain pending. Solo play and private two-player shared-board competition are the first release scope. Mobile interaction details and the initial deployment route remain open decisions. The solver, other competition modes, and Google login are later work. Read the design interview for the full confirmed rule set.
+A TypeScript/Node/Colyseus browser game supports [solo play](../solo-play.md) and [private two-player shared-board competition](../versus-gameplay.md). The owner selected free-drawn rectangles with strict center inclusion and no zoom; see [mobile interaction](../mobile-interaction.md). Revised physical-phone acceptance and the initial deployment route remain pending. The solver, other competition modes, and Google login are later work. Read the design interview for the full confirmed rule set.
 
 ## What does not travel in Git
 
