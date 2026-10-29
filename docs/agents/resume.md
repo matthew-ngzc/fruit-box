@@ -7,7 +7,7 @@ The repository is the durable context. A desktop chat, a global skill installati
 - Git and GitHub CLI (`gh`). Authenticate the CLI on the new machine using your own account; credentials are not stored in Git.
 - An agent able to read/edit files and run the selected project's tools. Codex can discover `.agents/skills/`; other agents can read those files directly through the catalog.
 - Python 3 for the repository's agent-setup/documentation check. This is a maintenance tool, not a backend-language choice.
-- Application runtime/build tools after the stack decision is accepted. None is selected or installed by this bootstrap.
+- Node 22.12+ and npm for the accepted TypeScript/Colyseus stack; run `npm ci`. See [room setup](../versus-rooms.md).
 
 ## Resume sequence
 
@@ -20,7 +20,7 @@ The repository is the durable context. A desktop chat, a global skill installati
 
 ## Current state
 
-This is a research/design project, not a playable application. Solo play and private two-player shared-board competition are the first release scope. The backend language/framework, mobile interaction details, and initial deployment route remain open decisions. The solver, other competition modes, and Google login are later work. Read the design interview for the full confirmed rule set.
+The first TypeScript/Node/Colyseus private-room transport slice is implemented; a playable application remains future work. Solo play and private two-player shared-board competition are the first release scope. Mobile interaction details and the initial deployment route remain open decisions. The solver, other competition modes, and Google login are later work. Read the design interview for the full confirmed rule set.
 
 ## What does not travel in Git
 

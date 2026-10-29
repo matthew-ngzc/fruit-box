@@ -2,7 +2,7 @@
 
 A personal Fruit Box project exploring solo play and real-time competition between friends on a shared board, accessible from iPhone and Android browsers.
 
-The project is currently in research and design. The backend language, multiplayer framework, and hosting approach are being evaluated; no playable application is implemented yet.
+TypeScript, Node and Colyseus are accepted. The first server slice connects two guests to a private room with an identical certified board; timed gameplay and browser UI remain future work. See [room setup and demo](docs/versus-rooms.md). Hosting remains undecided.
 
 ## Continue with an agent
 
@@ -25,4 +25,4 @@ python3 scripts/check_agent_setup.py
 python3 -m unittest discover -s tests -p 'test_*.py'
 ```
 
-On Windows, `python` may be the executable name. Application build/test commands will be added with the selected stack. Credentials and private infrastructure access are configured on each machine, not stored in this public repository. Imported skill licensing is documented in [the skill notice](.agents/skills/NOTICE.md).
+On Windows, `python` may be the executable name. Use Node 22.12+ and run `npm ci`, `npm test`, `npm run typecheck`, `npm run build` and `npm run demo` for the room server. Credentials and private infrastructure access are configured on each machine, not stored in this public repository. Imported skill licensing is documented in [the skill notice](.agents/skills/NOTICE.md).

@@ -15,7 +15,7 @@ concurrency:
 
 jobs:
   check:
-    name: Agent setup (${{ matrix.os }})
+    name: Context and application (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     timeout-minutes: 10
     strategy:
@@ -33,6 +33,16 @@ jobs:
         run: python scripts/check_agent_setup.py
       - name: Check validator behavior
         run: python -m unittest discover -s tests -p 'test_*.py'
+      - uses: actions/setup-node@v7.1.0
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+      - name: Demonstrate compiled room transport
+        run: node dist/scripts/room-demo.js
 
   required:
     name: Required checks

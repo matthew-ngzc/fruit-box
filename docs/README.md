@@ -1,6 +1,6 @@
 # Fruit Box research and design
 
-Research date: 29 October 2026 (Singapore time). No application implementation has been started.
+Research date: 29 October 2026 (Singapore time). The first TypeScript/Colyseus room transport slice is implemented; a playable match and browser UI remain future work.
 
 1. [Repository and deployment](research/repository.md): inspected commit, game engine, generator, UI, running instructions, docs, tests, license, and limits of the public repo's relationship to the live site.
 2. [Origins and board generation](research/origins-and-generation.md): original 2007 release, 2019 HTML5 update, newer 2026 project dates, and exact generator comparison.
@@ -16,12 +16,15 @@ Research date: 29 October 2026 (Singapore time). No application implementation h
 12. [ADR media](assets/README.md): pictures and recordings in per-ADR folders beside `adr/`.
 13. [CI/CD](ci-cd.md): real current checks, accepted automatic-delivery policy, and remaining deployment prerequisites.
 
+14. [Private versus rooms](versus-rooms.md): setup, public state, real-client demo and implementation limits.
+15. [TypeScript/Colyseus ADR](adr/0003-typescript-colyseus.md): accepted stack and rules/room ownership.
+
 ## Visual routes
 
 - [Delivery and evidence loop](development-workflow.md#detailed-review-contract).
 - [Stacked PR dependencies and restacking](development-workflow.md#stacked-pr-delivery).
 - [ADR lifecycle](adr/README.md#when-and-how-to-record-a-decision).
-- [Proposed system components](research/architecture-and-modes.md#proposed-components); the stack is not accepted yet.
+- [Proposed system components](research/architecture-and-modes.md#proposed-components); historical proposal; see ADR 0003 for the accepted stack.
 - [CI gates and future deployment boundary](ci-cd.md#implemented-ci).
 
-[CONTEXT.md](../CONTEXT.md) contains the game's domain glossary. Source links in the reports point to the inspected upstream commit; no upstream application code is included in these deliverables.
+[CONTEXT.md](../CONTEXT.md) contains the game's domain glossary. Source links in the reports point to the inspected upstream commit; the first implementation vendors the pinned MIT engine with [provenance](../vendor/fruit-box-game/README.md).

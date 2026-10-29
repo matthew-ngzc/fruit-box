@@ -4,6 +4,7 @@ Start from [the documentation index](README.md) and name the contract being chan
 
 | Subject | Owner |
 | --- | --- |
+| Private-room implementation, runtime setup and public state | [Versus rooms](versus-rooms.md) |
 | Domain vocabulary | [CONTEXT.md](../CONTEXT.md) |
 | Confirmed product rules and open decisions | [Design interview](design-session.md) |
 | Accepted consequential decision and rationale | [ADR register](adr/README.md) and its focused record |
