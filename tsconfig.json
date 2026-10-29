@@ -19,6 +19,7 @@
     "scripts/room-demo.ts",
     "vendor/**/*.js",
     "tests/game/**/*.ts",
-    "vitest.config.ts"
+    "vitest.config.ts",
+    "web/**/*.ts"
   ]
 }

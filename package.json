@@ -8,7 +8,7 @@
   },
   "scripts": {
     "dev": "tsx src/server.ts",
-    "build": "tsc",
+    "build": "tsc && esbuild web/app.ts --bundle --format=esm --target=es2022 --outfile=dist/web/app.js",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "start": "node dist/src/server.js",
@@ -21,7 +21,9 @@
     "@colyseus/ws-transport": "0.18.4"
   },
   "devDependencies": {
+    "@types/express": "5.0.6",
     "@types/node": "26.6.6",
+    "esbuild": "0.28.2",
     "tsx": "4.23.15",
     "typescript": "7.0.2",
     "vitest": "5.0.5"

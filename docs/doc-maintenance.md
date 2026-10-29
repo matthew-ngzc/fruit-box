@@ -4,6 +4,8 @@ Start from [the documentation index](README.md) and name the contract being chan
 
 | Subject | Owner |
 | --- | --- |
+| Playable match rules and recovery | [Versus gameplay](versus-gameplay.md) |
+| Upstream reuse and license notices | [Licensing](licensing.md) |
 | Private-room implementation, runtime setup and public state | [Versus rooms](versus-rooms.md) |
 | Domain vocabulary | [CONTEXT.md](../CONTEXT.md) |
 | Confirmed product rules and open decisions | [Design interview](design-session.md) |

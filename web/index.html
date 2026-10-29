@@ -1,0 +1,14 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,">
+<title>Fruit Box · Versus</title><link rel="stylesheet" href="/style.css"></head>
+<body><main>
+<header><a class="brand" href="/">fruit box<span>THE SUM-TEN GAME</span></a><span class="edition">PLAY TOGETHER / VERSUS</span></header>
+<section id="lobby" class="welcome"><p class="eyebrow">A LITTLE FRIENDLY COMPETITION</p><h1>One board.<br>Two sharp eyes.</h1><p>Find rectangles that add up to ten.<br>Clear the fruit before your friend does.</p>
+<form id="join-form"><label for="nickname">Your nickname</label><input id="nickname" name="nickname" maxlength="48" required placeholder="What should we call you?" autocomplete="nickname"><label for="room-code">Room code <span>(leave empty to host)</span></label><input id="room-code" name="room" placeholder="Paste a friend's room code" autocomplete="off"><button id="join" type="submit">Create a room <span>↗</span></button></form><p class="small">2 players · 2 minutes · one shared board</p></section>
+<section id="game" hidden><div class="game-top"><div><p class="eyebrow">SHARED-BOARD COMPETITION</p><h1>Make it ten.</h1></div><div class="clock"><span id="time">2:00</span><small>ACTIVE PLAY</small></div></div>
+<div id="scores" class="scores"></div>
+<div class="board-wrap"><div id="board" role="group" aria-label="Fruit board: drag a rectangle or tap two corners"></div><div id="cover" class="cover"><p id="cover-title">Waiting for your friend</p><span id="cover-detail">Share the room link to get started.</span></div></div>
+<div class="tools"><p id="selection">Drag a rectangle · aim for 10</p><button id="ready" type="button">I'm ready</button><button id="pause" type="button" hidden>Pause</button><button id="resume" type="button" hidden>Ready to resume</button></div>
+<div class="room-line"><span>Room <strong id="room-id"></strong></span><button id="copy" type="button">Copy invite link</button><a href="/" id="new-room">New room</a></div></section>
+<p id="message" role="status" aria-live="polite"></p><footer>Small sums. Good company.<a href="/third-party-license" target="_blank" rel="noopener">Engine credits & MIT notice</a></footer>
+</main><script type="module" src="/app.js"></script></body></html>
