@@ -39,6 +39,10 @@ export class Match {
     const command = value as Record<string, unknown>;
     if (!Number.isSafeInteger(command.id) || Number(command.id) <= player.lastId) return reject('Duplicate or invalid command');
     player.lastId = Number(command.id);
+    if (command.type === 'play-again' && this.phase === 'finished') {
+      player.ready = true;
+      return { ok: true, reason: 'Ready to play again' };
+    }
     if (command.type === 'pause' && this.phase === 'playing' && player.pauses > 0) {
       player.pauses--;
       this.phase = 'paused';

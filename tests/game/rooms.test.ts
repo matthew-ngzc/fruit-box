@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, expect, it } from 'vitest';
+import { afterAll, beforeAll, expect, it, vi } from 'vitest';
 import { Client, type Room } from '@colyseus/sdk';
 import { startServer } from '../../src/app.js';
 import type { RoomState } from '../../src/state.js';
@@ -185,4 +185,85 @@ it('arbitrates conflicting network clears once and restores identity/score after
   expect(recovered.state.players.get(session)?.score).toBe(clear.fruit.length);
   expect(recovered.state.remainingMs).toBeLessThanOrEqual(before);
   expect(recovered.state.board.toJSON()).toEqual(b.state.board.toJSON());
+});
+
+it('replays solo in the same room with fresh score, board, time and pause budget', async () => {
+  const clock = vi.spyOn(performance, 'now').mockReturnValue(0);
+  try {
+    const solo = connect(await new Client(running.url).create<RoomState>('solo', { nickname: 'Again' }));
+    await waitFor(solo, () => solo.state?.players?.size === 1);
+    solo.send('ready');
+    await waitFor(solo, () => solo.state.phase === 'playing');
+    const original = solo.state.board.toJSON();
+    solo.send('command', { ...findClear([...solo.state.board]), type: 'clear', id: 1 });
+    await waitFor(solo, () => solo.state.players.get(solo.sessionId)!.score > 0);
+    solo.send('command', { type: 'pause', id: 2 });
+    await waitFor(solo, () => solo.state.phase === 'paused');
+    clock.mockReturnValue(150001);
+    await waitFor(solo, () => solo.state.phase === 'finished');
+    solo.send('command', { type: 'play-again', id: 3, round: 1 });
+    await waitFor(solo, () => solo.state.phase === 'playing');
+    expect(solo.state.round).toBe(2);
+    expect(solo.state.players.size).toBe(1);
+    expect(solo.state.players.get(solo.sessionId)?.nickname).toBe('Again');
+    expect(solo.state.players.get(solo.sessionId)?.score).toBe(0);
+    expect(solo.state.players.get(solo.sessionId)?.pauses).toBe(2);
+    expect(solo.state.remainingMs).toBe(120000);
+    expect(solo.state.board.toJSON()).not.toEqual(original);
+    expect([...solo.state.board].every(value => value > 0)).toBe(true);
+    const result = new Promise<{ok:boolean;reason:string}>(resolve => solo.onMessage('result', resolve));
+    solo.send('command', { type: 'pause', id: 999, round: 1 });
+    expect(await result).toMatchObject({ok:false, reason:'This command belongs to a different round'});
+    expect(solo.state.phase).toBe('playing');
+  } finally { clock.mockRestore(); }
+});
+
+it('restarts versus only after both guests confirm the finished round and never for a departed guest', async () => {
+  const clock = vi.spyOn(performance, 'now').mockReturnValue(0);
+  try {
+    const sdk = new Client(running.url);
+    const a = connect(await sdk.create<RoomState>('versus', { nickname: 'Alice' }));
+    const b = connect(await sdk.joinById<RoomState>(a.roomId, { nickname: 'Bob' }));
+    await waitFor(b, () => b.state?.players?.size === 2);
+    a.send('ready'); b.send('ready');
+    await waitFor(a, () => a.state.phase === 'playing');
+    const replies: {ok:boolean;reason:string}[] = [];
+    a.onMessage('result', result => replies.push(result));
+    a.send('command', { type: 'play-again', id: 1, round: 1 });
+    await new Promise<void>(resolve => { const off = a.onMessage('result', () => { off(); resolve(); }); });
+    expect(replies.at(-1)?.ok).toBe(false);
+    clock.mockReturnValue(120001);
+    await waitFor(a, () => a.state.phase === 'finished');
+    await waitFor(b, () => b.state.phase === 'finished');
+    const finishedBoard = a.state.board.toJSON();
+    a.send('command', { type: 'play-again', id: 2, round: 1 });
+    await waitFor(b, () => b.state.players.get(a.sessionId)?.ready === true);
+    expect(b.state.phase).toBe('finished');
+    expect(b.state.players.get(b.sessionId)?.ready).toBe(false);
+    expect(b.state.board.toJSON()).toEqual(finishedBoard);
+    const duplicate = new Promise<{ok:boolean}>(resolve => a.onMessage('result', resolve));
+    a.send('command', { type: 'play-again', id: 2, round: 1 });
+    expect((await duplicate).ok).toBe(false);
+    expect(a.state.phase).toBe('finished');
+    b.send('command', { type: 'play-again', id: 1, round: 1 });
+    await waitFor(a, () => a.state.round === 2 && a.state.phase === 'playing');
+    await waitFor(b, () => b.state.round === 2);
+    expect(a.roomId).toBe(b.roomId);
+    expect(a.state.players.has(a.sessionId)).toBe(true);
+    expect(a.state.players.has(b.sessionId)).toBe(true);
+    expect(a.state.board.toJSON()).toEqual(b.state.board.toJSON());
+    expect(a.state.board.toJSON()).not.toEqual(finishedBoard);
+    expect([...a.state.players.values()].map(p => [p.score, p.pauses, p.ready])).toEqual([[0, 2, false], [0, 2, false]]);
+    expect(a.state.remainingMs).toBe(120000);
+    clock.mockReturnValue(240002);
+    await waitFor(a, () => a.state.phase === 'finished');
+    a.send('command', { type: 'play-again', id: 1, round: 2 });
+    await waitFor(b, () => b.state.players.get(a.sessionId)?.ready === true);
+    const token = b.reconnectionToken;
+    await b.leave();
+    await waitFor(a, () => a.state.players.get(b.sessionId)?.connected === false);
+    expect(a.state.phase).toBe('finished');
+    expect(a.state.round).toBe(2);
+    await expect(sdk.reconnect(token)).rejects.toThrow();
+  } finally { clock.mockRestore(); }
 });

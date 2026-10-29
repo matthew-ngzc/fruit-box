@@ -25,7 +25,7 @@ function send(type: string, extra = {}) {
   if (!room || !connected) return;
   commandId++;
   sessionStorage.setItem('commandId', String(commandId));
-  room.send('command', { type, id: commandId, ...extra });
+  room.send('command', { type, id: commandId, round: room.state.round, ...extra });
 }
 function cancelSelection() {
   dragging = false;
@@ -97,7 +97,11 @@ function renderSelection() {
 function render() {
   const state = room?.state;
   if (!state?.board) return;
-  if (state.phase !== phase) { phase = state.phase; cancelSelection(); }
+  if (state.phase !== phase) {
+    phase = state.phase; cancelSelection();
+    message('');
+    if (phase === 'playing' && connected) sessionStorage.setItem('rejoin', room!.reconnectionToken);
+  }
   for (let id = 0; id < cells.length; id++) {
     const value = state.board[id];
     cells[id].textContent = value ? String(value) : '';
@@ -109,6 +113,7 @@ function render() {
   const solo = state.mode === 'solo';
   document.body.dataset.mode = solo ? 'solo' : 'versus';
   element('game').dataset.mode = solo ? 'solo' : 'versus';
+  element('game').dataset.phase = state.phase;
   document.title = `Fruit Box · ${solo ? 'Solo' : 'Versus'}`;
   element('game-mode').textContent = solo ? 'SOLO PLAY' : 'SHARED-BOARD COMPETITION';
   element('room-invite').hidden = solo;
@@ -124,23 +129,30 @@ function render() {
   element('time').textContent = `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
   const self = state.players.get(room!.sessionId);
   element('ready').textContent = solo ? 'Start solo round' : "I'm ready";
-  element('resume').textContent = solo ? 'Resume' : 'Ready to resume';
+  element('resume').textContent = self?.ready ? 'Waiting for your friend…' : 'Resume';
   element<HTMLButtonElement>('ready').hidden = state.phase !== 'waiting';
   element<HTMLButtonElement>('ready').disabled = !connected || !!self?.ready;
   element<HTMLButtonElement>('pause').hidden = state.phase !== 'playing';
   element<HTMLButtonElement>('pause').disabled = !connected || !self?.pauses;
   element<HTMLButtonElement>('resume').hidden = state.phase !== 'paused';
   element<HTMLButtonElement>('resume').disabled = !connected || !!self?.ready;
+  const allConnected = players.length === (solo ? 1 : 2) && players.every(([, player]) => player.connected);
+  element('play-again').hidden = state.phase !== 'finished';
+  element<HTMLButtonElement>('play-again').disabled = !connected || !allConnected || !!self?.ready;
+  element('play-again').textContent = self?.ready ? 'Waiting for your friend…' : 'Play again';
+  element('rematch-status').hidden = state.phase !== 'finished' || solo;
+  element('rematch-status').textContent = !allConnected ? 'Your friend has left. Choose New game to invite someone again.'
+    : players.filter(([, player]) => player.ready).map(([, player]) => `${player.nickname} is ready.`).join(' ') || 'Both players choose Play again to start a fresh board.';
   if (state.phase === 'waiting') {
     element('cover-title').textContent = solo ? 'Ready for a solo round?' : players.length < 2 ? 'Waiting for your friend' : 'Ready when you are';
     element('cover-detail').textContent = solo ? 'Start a 120-second round whenever you are ready.' : self?.ready ? 'You are ready. Waiting for your friend.' : 'Share the invite link. Both players choose “I’m ready” to begin.';
   } else if (state.phase === 'paused') {
     element('cover-title').textContent = 'A little breather.';
-    element('cover-detail').textContent = `Resumes in ${Math.ceil(state.pauseRemainingMs / 1000)}s, or ${solo ? 'tap Resume to continue' : 'when you are both ready'}.`;
+    element('cover-detail').textContent = `Resumes in ${Math.ceil(state.pauseRemainingMs / 1000)}s, or ${solo ? 'tap Resume to continue' : self?.ready ? 'when your friend taps Resume' : 'when you both tap Resume'}.`;
   } else if (state.phase === 'finished') {
     const scores = players.map(([, player]) => player.score);
     element('cover-title').textContent = solo ? 'Round complete. Well played!' : scores[0] === scores[1] ? 'A draw. Well played!' : `${players[scores[0] > scores[1] ? 0 : 1][1].nickname} wins!`;
-    element('cover-detail').textContent = solo ? `Final score: ${scores[0]} apples. Choose New game to play again.` : 'Match finished. Create a new room to play again.';
+    element('cover-detail').textContent = solo ? `Final score: ${scores[0]} apples. Play again for a fresh board.` : 'Round finished. Keep your room and play another round.';
     sessionStorage.removeItem('rejoin');
   }
   renderSelection();
@@ -212,9 +224,13 @@ window.addEventListener('resize', () => { cancelSelection(); renderSelection(); 
 
 function updateViewControls() {
   const fullscreen = !!document.fullscreenElement;
-  element('fullscreen').textContent = fullscreen ? 'Exit fullscreen' : 'Fullscreen';
-  element('view-hint').textContent = matchMedia('(max-width: 900px) and (orientation: portrait)').matches
-    ? 'Turn your phone sideways for a larger board.' : '';
+  const available = !!document.fullscreenEnabled && !!document.documentElement.requestFullscreen;
+  element('fullscreen').textContent = fullscreen ? 'Exit fullscreen' : available ? 'Fullscreen' : 'Fullscreen unavailable';
+  element<HTMLButtonElement>('fullscreen').disabled = !available && !fullscreen;
+  const hint = element('view-hint');
+  hint.classList.toggle('unsupported', !available);
+  hint.textContent = !available ? 'This browser cannot fullscreen the game. Rotate your phone for landscape play.'
+    : matchMedia('(max-width: 900px) and (orientation: portrait)').matches ? 'Turn your phone sideways for a larger board.' : '';
 }
 async function enterPlayView() {
   try {
@@ -246,7 +262,36 @@ element('ready').onclick = () => {
 updateViewControls();
 element('pause').onclick = () => send('pause');
 element('resume').onclick = () => send('resume');
-element('copy').onclick = async () => { try { await navigator.clipboard.writeText(location.href); message('Invite link copied.'); } catch { message(`Share this address: ${location.href}`); } };
+element('play-again').onclick = () => {
+  if (matchMedia('(pointer: coarse), (max-width: 900px)').matches) void enterPlayView();
+  send('play-again');
+};
+
+async function copyRoomText(kind: 'code' | 'link') {
+  if (!room) return;
+  const text = kind === 'code' ? room.roomId : new URL(`/?room=${encodeURIComponent(room.roomId)}`, location.origin).href;
+  const label = kind === 'code' ? 'Room code' : 'Invite link';
+  try {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(text);
+      element('share-fallback').hidden = true;
+      message(`${label} copied.`);
+      return;
+    }
+  } catch { /* Clipboard permission can be denied even on a secure origin. */ }
+  // Wi-Fi HTTP may lack Clipboard API. Keep selected text as the final fallback.
+  element('share-fallback').hidden = false;
+  element('share-label').textContent = label;
+  const input = element<HTMLInputElement>('share-text');
+  input.value = text; input.focus(); input.select(); input.setSelectionRange(0, text.length);
+  let copied = false;
+  try { copied = document.execCommand('copy'); } catch { /* Manual selection remains available. */ }
+  message(copied ? `${label} copied.` : `Automatic copy unavailable. Copy the selected ${kind === 'code' ? 'room code' : 'invite link'} below.`);
+}
+element('copy').onclick = () => { void copyRoomText('link'); };
+element('copy-code').onclick = () => { void copyRoomText('code'); };
+element('share-close').onclick = () => { element('share-fallback').hidden = true; };
+
 element('new-room').onclick = async event => {
   event.preventDefault();
   await room?.leave();
