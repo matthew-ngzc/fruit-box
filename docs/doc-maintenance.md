@@ -4,6 +4,7 @@ Start from [the documentation index](README.md) and name the contract being chan
 
 | Subject | Owner |
 | --- | --- |
+| Solo mode and its shared match/interface | [Solo play](solo-play.md) |
 | Mobile selection, landscape and fullscreen | [Mobile interaction](mobile-interaction.md) |
 | Local Docker lifecycle and visibility | [Local Docker](local-docker.md) |
 | Playable match rules and recovery | [Versus gameplay](versus-gameplay.md) |

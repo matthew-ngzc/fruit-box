@@ -44,7 +44,18 @@ try {
   const recovered = await sdk.reconnect(token); clients.push(recovered);
   await waitFor(recovered, () => recovered.state?.players?.get(first.sessionId)?.connected === true);
   assert.equal(recovered.sessionId, first.sessionId);
-  console.log('Container HTTP/assets/license and real-client start, shared board, pause/resume and reconnect passed.');
+  const solo = await sdk.create('solo', { nickname: 'Container Solo' }); clients.push(solo);
+  await waitFor(solo, () => solo.state?.mode === 'solo');
+  await assert.rejects(sdk.joinById(solo.roomId, { nickname: 'Extra' }));
+  solo.send('ready');
+  await waitFor(solo, () => solo.state.phase === 'playing');
+  assert.equal(solo.state.players.size, 1);
+  solo.onMessage('result', result => assert.equal(result.ok, true));
+  solo.send('command', { type: 'pause', id: 1 });
+  await waitFor(solo, () => solo.state.phase === 'paused');
+  solo.send('command', { type: 'resume', id: 2 });
+  await waitFor(solo, () => solo.state.phase === 'playing');
+  console.log('Container HTTP/assets/license, versus synchronization/reconnect and one-player solo start/pause/resume passed.');
 } finally {
   await Promise.all(clients.map(room => room.leave()));
 }

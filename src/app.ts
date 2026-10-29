@@ -1,7 +1,7 @@
 import { createServer } from 'node:http';
 import { Server } from '@colyseus/core';
 import { WebSocketTransport } from '@colyseus/ws-transport';
-import { VersusRoom } from './versus-room.js';
+import { GameRoom, SoloRoom } from './game-room.js';
 import { resolve } from 'node:path';
 
 export async function startServer(port = 2567, host = '127.0.0.1') {
@@ -14,7 +14,8 @@ export async function startServer(port = 2567, host = '127.0.0.1') {
       app.get('/third-party-license', (_req, res) => res.type('text').sendFile(resolve('vendor/fruit-box-game/LICENSE')));
     },
   });
-  server.define('versus', VersusRoom);
+  server.define('versus', GameRoom);
+  server.define('solo', SoloRoom);
   await server.listen(port, host);
   const address = http.address();
   if (!address || typeof address === 'string') throw new Error('Expected a TCP listening address');

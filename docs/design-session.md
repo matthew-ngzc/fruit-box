@@ -4,7 +4,7 @@ Updated: 29 October 2026 (Asia/Singapore).
 
 ## Confirmed scope
 
-- Preserve solo play.
+- Preserve solo play; add a one-player visual preview using the current 120-second match rules and controls. See [solo play](solo-play.md).
 - First multiplayer mode: shared-board competition, where a clear removes fruit for both players and credits the player who made it.
 - Initial audience: private friend rooms.
 - First platform: a mobile-friendly browser app, accessible by link on iPhone and Android.
@@ -38,7 +38,7 @@ Updated: 29 October 2026 (Asia/Singapore).
    - Hide board and cancel drags during pause; ignore additional pause requests without charge (confirmed).
    - Trust model: casual validation vs stronger ranked enforcement (recommend casual validation).
 3. Platform: browser first (confirmed).
-   - Owner reported successful two-player play on Android Brave, with finger occlusion and small portrait fruit; requested combined box/highlights and landscape/fullscreen where supported. Revised [mobile interaction](mobile-interaction.md) remains a device-review preview.
+   - Owner reported two-player play and fullscreen working on Android Brave. After trying the hybrid, explicitly chose free-drawn boxes with strict center inclusion, no alternate selection forms and no zoom. The revised [mobile interaction](mobile-interaction.md) and [solo preview](solo-play.md) await device review.
    - Optional home-screen installation (proposed).
 4. Geography: Singapore, sometimes same room/Wi-Fi (confirmed).
    - Singapore server proposed; validate actual round-trip times on the two phones.

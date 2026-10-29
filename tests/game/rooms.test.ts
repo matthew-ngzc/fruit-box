@@ -84,6 +84,60 @@ it('does not admit guests by public room-name matching', async () => {
   await expect(sdk.join('versus', { nickname: 'Uninvited' })).rejects.toThrow();
 });
 
+it('starts a one-seat solo round without another guest', async () => {
+  const sdk = new Client(running.url);
+  const solo = connect(await sdk.create<RoomState>('solo', { nickname: 'Solo' }));
+  await waitFor(solo, () => solo.state?.players?.size === 1);
+  expect(solo.state.mode).toBe('solo');
+  await expect(sdk.joinById(solo.roomId, { nickname: 'Unexpected guest' })).rejects.toThrow();
+  solo.send('ready');
+  await waitFor(solo, () => solo.state.phase === 'playing');
+  expect(solo.state.players.size).toBe(1);
+  expect(solo.state.board.length).toBe(170);
+  expect(solo.state.remainingMs).toBeGreaterThan(119000);
+});
+
+it('credits solo clears once, resumes alone and restores score after reconnect', async () => {
+  const sdk = new Client(running.url);
+  const solo = connect(await sdk.create<RoomState>('solo', { nickname: 'Solo' }));
+  await waitFor(solo, () => solo.state?.mode === 'solo');
+  solo.send('ready');
+  await waitFor(solo, () => solo.state.phase === 'playing');
+  const clear = { ...findClear([...solo.state.board]), type: 'clear', id: 1 };
+  const received: { ok: boolean }[] = [];
+  solo.onMessage('result', result => received.push(result));
+  solo.send('command', clear);
+  await waitFor(solo, () => solo.state.players.get(solo.sessionId)?.score === clear.fruit.length);
+  solo.send('command', clear);
+  solo.send('command', { type: 'pause', id: 2 });
+  await waitFor(solo, () => solo.state.phase === 'paused');
+  expect(solo.state.players.get(solo.sessionId)?.score).toBe(clear.fruit.length);
+  expect(solo.state.players.get(solo.sessionId)?.pauses).toBe(1);
+  expect(received.some(result => result.ok === false)).toBe(true);
+  solo.send('command', { type: 'resume', id: 3 });
+  await waitFor(solo, () => solo.state.phase === 'playing');
+  const token = solo.reconnectionToken, id = solo.sessionId;
+  solo.reconnection.enabled = false;
+  await solo.leave(false);
+  const recovered = connect(await sdk.reconnect<RoomState>(token));
+  await waitFor(recovered, () => recovered.state?.players?.get(id)?.connected === true);
+  expect(recovered.sessionId).toBe(id);
+  expect(recovered.state.mode).toBe('solo');
+  expect(recovered.state.players.size).toBe(1);
+  expect(recovered.state.players.get(id)?.score).toBe(clear.fruit.length);
+});
+
+it('does not let client options change a versus room into solo', async () => {
+  const sdk = new Client(running.url);
+  const first = connect(await sdk.create<RoomState>('versus', { nickname: 'Host', mode: 'solo', maxClients: 1 }));
+  await waitFor(first, () => first.state?.players?.size === 1);
+  expect(first.state.mode).toBe('versus');
+  first.send('ready');
+  await waitFor(first, () => first.state.players.get(first.sessionId)?.ready === true);
+  expect(first.state.phase).toBe('waiting');
+  connect(await sdk.joinById<RoomState>(first.roomId, { nickname: 'Guest' }));
+});
+
 it('starts only after both guests ready and synchronizes a confirmed clear', async () => {
   const sdk = new Client(running.url);
   const first = connect(await sdk.create<RoomState>('versus', { nickname: 'Alice' }));
