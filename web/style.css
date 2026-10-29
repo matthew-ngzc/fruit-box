@@ -72,10 +72,25 @@
 .fruit { display: grid; place-items: center; }
 #solo { width: 100%; margin-top: 10px; border-color: #38624e; color: #28553e; }
 #room-invite { display: inline-flex; align-items: center; gap: 12px; }
+.cover-actions { display: flex; justify-content: center; width: 100%; margin-top: 22px; }
+#rematch-status { margin-top: 15px; }
+.primary-action { background: #b83e2e; border-color: #b83e2e; color: #fff; font-size: 18px; min-height: 56px; width: min(270px, 100%); padding: 14px 24px; }
+.primary-action:hover { background: #983025; }
+.primary-action:disabled { opacity: .7; }
+#game[data-phase="paused"] .cover { position: fixed; inset: 0; z-index: 15; border-radius: 0; background: #eae2d2; }
+#share-fallback { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: min(460px, calc(100vw - 32px)); max-height: calc(100dvh - 24px); overflow: auto; z-index: 20; background: #fffcf5; padding: 20px; border: 1px solid #bcb09d; border-radius: 12px; box-shadow: 0 8px 40px #342d2640; }
+#share-fallback label { margin-top: 0; }
+#share-help { font: 13px/1.5 system-ui; color: #716859; }
 @media (orientation: landscape) and (max-height: 600px) {
+  #game { grid-template-rows: 44px 108px minmax(0, 1fr) 68px; }
   #game[data-mode="solo"] { grid-template-rows: 44px 62px minmax(0, 1fr) 44px; }
   #room-invite { display: contents; }
+  #room-invite > span { flex-basis: 100%; }
+  .room-line button { width: calc(50% - 3px); padding: 3px; line-height: 1.2; }
+  .tools #view-hint.unsupported { display: block; flex-basis: auto; font-size: 10px; line-height: 1.2; }
+  .tools #fullscreen:disabled { display: none; }
 }
 @media (orientation: landscape) and (max-height: 360px) {
+  #game { grid-template-rows: 32px 78px minmax(0, 1fr) 68px; }
   #game[data-mode="solo"] { grid-template-rows: 32px 42px minmax(0, 1fr) 44px; }
 }

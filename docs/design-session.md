@@ -1,6 +1,6 @@
 # Fruit Box design interview
 
-Updated: 29 October 2026 (Asia/Singapore).
+Updated: 30 October 2026 (Asia/Singapore).
 
 ## Confirmed scope
 
@@ -15,6 +15,7 @@ Updated: 29 October 2026 (Asia/Singapore).
 - Disconnects do not stop the clock; allow rejoins until the match finishes, retaining identity and score.
 - Either player can pause immediately, spending one of their two pause chances per game. Pauses last at most 30 seconds, with early resumption when both are ready.
 - Pauses hide the board from both players and cancel active drags. Ignore further pause requests while already paused without spending a chance.
+- Play again keeps the same room and players: solo starts immediately after finish; versus starts a fresh board when both connected players confirm. Reset scores, timer and pause allowances. The owner explicitly accepted this flow on 30 October 2026; see [ADR 0005](adr/0005-rematch-in-the-same-room.md). Resume is a prominent red action centered on the pause screen.
 - Join through guest nicknames and private links/codes first; allow future accounts, including Google login.
 - Use TypeScript throughout, Node for the backend runtime, and Colyseus for rooms and synchronization. The owner accepted this choice on 29 October 2026; [ADR 0003](adr/0003-typescript-colyseus.md) records boundaries and trade-offs.
 - The offline research solver is deferred until after the main game.
@@ -29,7 +30,7 @@ Updated: 29 October 2026 (Asia/Singapore).
    - Conflicting clears: first valid server arrival (confirmed).
    - Selection feedback: pending highlight until server confirmation; no optimistic fruit removal (accepted 29 October 2026).
    - Opponent selection visibility: committed clears only (confirmed).
-   - Equal scores draw (confirmed); rematch flow (open).
+   - Equal scores draw (confirmed); same-room rematches require both players, with immediate solo replay (accepted, ADR 0005).
 2. Audience: private friends (confirmed).
    - Guest nicknames and private links/codes first; future accounts including Google login (confirmed).
    - Stable internal player identity and later guest-to-account linking (proposed).

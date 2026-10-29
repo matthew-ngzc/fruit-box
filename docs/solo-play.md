@@ -6,7 +6,7 @@ Choose **Play solo** on the landing page; nickname is optional and defaults to Y
 
 Solo uses the same certified 17-by-10 board generator, free rectangle selection, center inclusion, pending confirmation, authoritative scoring and 120 active seconds as versus. Empty board also ends the round; a no-moves board waits for the deadline. This preview reuses the existing two-pause budget and 30-second pause cap, with one-player Resume returning to play immediately. Disconnection leaves the clock running and allows identity/score recovery until finish. A server restart loses the attempt. No hint/solver, saved best score, account or offline mode is added.
 
-The page shows one score, solo Start/Resume copy and **Round complete** with the final score. It hides room-invite controls and opponent/draw/winner copy. **New game** returns to the landing page to start another round. The landscape/sidebar and fullscreen behavior are shared with [mobile interaction](mobile-interaction.md). The owner requested this mode to validate appearance; longer-term solo pause/persistence/features can be decided separately.
+The page shows one score, solo Start/Resume copy and **Round complete** with the final score. It hides room-invite controls and opponent/draw/winner copy. **Play again** immediately starts a fresh certified board in the same room, resetting score, time and pause allowances. **New game** returns to the landing page instead. Resume is a large red action in the middle of the pause screen; solo resumes immediately. The landscape/sidebar and fullscreen behavior are shared with [mobile interaction](mobile-interaction.md). The owner requested this mode to validate appearance; longer-term solo pause/persistence/features can be decided separately.
 
 ## Authoritative room ownership
 
@@ -24,6 +24,10 @@ flowchart LR
     Ready --> Match
     Match --> View[Shared free-box board interface]
     View --> Result[Mode-specific completion display]
+    Result --> Replay{Play again}
+    Replay -->|Solo: one guest| Fresh[Fresh board and reset]
+    Replay -->|Versus: both guests| Fresh
+    Fresh --> Match
 ```
 
 ## Verification and acceptance

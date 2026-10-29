@@ -50,7 +50,7 @@ sequenceDiagram
 
 ## Ownership and limits
 
-[The pure rules module](../src/rules.ts) exposes certified generation and immutable inspection/clearing, without importing Colyseus. The pinned MIT generator is [vendored with provenance](../vendor/fruit-box-game/README.md). [The room](../src/game-room.ts) owns the public state and admission. Generation happens synchronously once during room setup; this can delay other room setup on the Node event loop. No latency/load guarantees are claimed. A worker/precomputed board pool belongs before scaling, not inside live clear handling.
+[The pure rules module](../src/rules.ts) exposes certified generation and immutable inspection/clearing, without importing Colyseus. The pinned MIT generator is [vendored with provenance](../vendor/fruit-box-game/README.md). [The room](../src/game-room.ts) owns the public state and admission. Generation happens synchronously during room setup and before each accepted rematch; this can delay other rooms on the Node event loop. No latency/load guarantees are claimed. A worker/precomputed board pool belongs before scaling, not inside live clear handling.
 
 Rooms are in memory in one process; shutdown loses them. Leaving releases a seat; an empty room is disposed by Colyseus. This is pre-match behavior only. The [playable extension](versus-gameplay.md) now implements timed matches, clear ordering, duplicate handling, pauses and recovery. Automatic rematches remain later work; the [solo preview](solo-play.md) now reuses this room lifecycle with one seat. Phone touch acceptance remains #3.
 
@@ -61,4 +61,4 @@ The owner agreed to two public test interfaces: direct rules calls and real SDK 
 Authoritative references: [Colyseus rooms](https://docs.colyseus.io/room), [schema definition](https://docs.colyseus.io/state/schema), [server setup](https://docs.colyseus.io/server). Exact installed versions are in package.json and package-lock.json; package types/source were checked alongside current documentation.
 
 
-The shared implementation is now [game-room.ts](../src/game-room.ts). Public state includes mode; the solo registration fixes one seat and the versus registration fixes two. Both use the same authoritative Match; see [solo play](solo-play.md).
+The shared implementation is now [game-room.ts](../src/game-room.ts). Public state includes mode and a server-owned round number; the solo registration fixes one seat and the versus registration fixes two. Both use the same authoritative Match; see [solo play](solo-play.md). [Rematches](versus-gameplay.md#authority-and-recovery) preserve room/identity while resetting the round, and commands identify the round to reject old deliveries.

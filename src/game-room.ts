@@ -22,15 +22,21 @@ export class GameRoom extends Room<{ state: RoomState }> {
       const player = this.state.players.get(client.sessionId);
       if (player) player.ready = true;
       if (this.state.players.size === this.maxClients && [...this.state.players.values()].every(player => player.ready)) {
-        this.match = new Match([...this.state.board], [...this.state.players.keys()], performance.now());
-        this.autoDispose = false;
-        void this.lock();
-        this.sync();
+        this.startRound();
       }
       this.broadcastPatch();
     });
     this.onMessage('command', (client, command: unknown) => {
-      const result = this.match?.command(client.sessionId, command, performance.now()) ?? { ok: false, reason: 'All players must be ready' };
+      // Legacy first-round commands remain valid; subsequent rounds require an explicit generation.
+      const round = command && typeof command === 'object' && 'round' in command ? command.round : 1;
+      const result = round !== this.state.round
+        ? { ok: false, reason: 'This command belongs to a different round' }
+        : this.match?.command(client.sessionId, command, performance.now()) ?? { ok: false, reason: 'All players must be ready' };
+      if (result.ok && this.match?.phase === 'finished' && this.state.players.size === this.maxClients &&
+          [...this.state.players.entries()].every(([id, player]) => player.connected && this.match!.players[id].ready)) {
+        this.startRound();
+        result.reason = 'New round started';
+      }
       this.sync();
       const id = command && typeof command === 'object' && 'id' in command ? command.id : null;
       client.send('result', { ...result, id });
@@ -55,6 +61,10 @@ export class GameRoom extends Room<{ state: RoomState }> {
     else {
       const player = this.state.players.get(client.sessionId);
       if (player) player.connected = false;
+      if (this.match.phase === 'finished') {
+        this.match.players[client.sessionId].ready = false;
+        this.sync();
+      }
     }
   }
 
@@ -69,6 +79,19 @@ export class GameRoom extends Room<{ state: RoomState }> {
 
   onReconnect(client: Client) {
     this.state.players.get(client.sessionId)!.connected = true;
+  }
+
+  private startRound() {
+    if (this.match) {
+      const { board } = createCertifiedBoard();
+      board.forEach((fruit, index) => { this.state.board[index] = fruit.value; });
+      this.state.round++;
+    }
+    this.match = new Match([...this.state.board], [...this.state.players.keys()], performance.now());
+    this.ended = false;
+    this.autoDispose = false;
+    void this.lock();
+    this.sync();
   }
 
   private sync() {
@@ -86,8 +109,8 @@ export class GameRoom extends Room<{ state: RoomState }> {
     if (this.match.phase === 'finished' && !this.ended) {
       this.ended = true;
       for (const pending of this.reconnections.values()) pending.reject(new Error('Match finished'));
-      this.clock.setTimeout(() => { void this.disconnect(); }, 60000);
     }
+    if (this.match.phase === 'finished' && this.clients.length === 0) void this.disconnect();
   }
 }
 
