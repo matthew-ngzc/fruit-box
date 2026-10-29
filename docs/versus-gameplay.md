@@ -6,7 +6,7 @@ This extends [private rooms](versus-rooms.md) with a browser match. Run `npm ci`
 
 ## Play
 
-Drag a rectangle in either direction, or tap/click two opposite cells; keyboard users can focus and activate the two corners. Remaining fruit must total ten. The pending rectangle stays highlighted until the server confirms or rejects; scores count fruit, not values. Only committed board changes are shared. Nicknames are inserted as text, never HTML. The 17-by-10 portrait board is a first implementation preview; small touch targets and real iPhone/Android usability require issue 3 acceptance. No actual-device touch acceptance is claimed.
+Drag a rectangle in either direction, or tap/click two opposite cells; keyboard users can focus and activate the two corners. Remaining fruit must total ten. The pending rectangle stays highlighted until the server confirms or rejects; scores count fruit, not values. Only committed board changes are shared. Nicknames are inserted as text, never HTML. The owner reported two-player play working on Android Brave, while requesting better selection visibility and landscape. The [mobile interaction preview](mobile-interaction.md) adds an enclosing box, off-finger sum, optional touch zoom and landscape controls; revised physical-device acceptance remains in issue 3.
 
 ## Authority and recovery
 
