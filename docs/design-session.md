@@ -16,7 +16,7 @@ Updated: 29 October 2026 (Asia/Singapore).
 - Either player can pause immediately, spending one of their two pause chances per game. Pauses last at most 30 seconds, with early resumption when both are ready.
 - Pauses hide the board from both players and cancel active drags. Ignore further pause requests while already paused without spending a chance.
 - Join through guest nicknames and private links/codes first; allow future accounts, including Google login.
-- TypeScript is acceptable, but the backend language is not settled. The user knows Java 8 and is interested in modern Java; Python is also an option, and Rust is unfamiliar but of interest for agent-assisted development.
+- Use TypeScript throughout, Node for the backend runtime, and Colyseus for rooms and synchronization. The owner accepted this choice on 29 October 2026; [ADR 0003](adr/0003-typescript-colyseus.md) records boundaries and trade-offs.
 - The offline research solver is deferred until after the main game.
 - Separate-board races, asynchronous challenges, and shared-board cooperation remain ideas for later exploration.
 - CI/CD is required. The owner chose automatic deployment after reviewed changes merge to main and CI passes, while deferring the hosting decision. ADR 0002 records this policy; application delivery remains unimplemented until the stack, host and build are ready.
@@ -44,10 +44,10 @@ Updated: 29 October 2026 (Asia/Singapore).
    - Singapore server proposed; validate actual round-trip times on the two phones.
 5. Solver purpose: offline research, after the game (confirmed).
    - No existing-site automation in the planned scope.
-6. Technology and learning goals: TypeScript acceptable; backend language open.
+6. Technology: TypeScript/Node/Colyseus accepted (ADR 0003).
    - All TypeScript/Node/Colyseus is the simplest route for shared code and room infrastructure.
    - TypeScript browser + Java backend is a viable route for refreshing Java skills.
-   - Ask whether delivery speed or deliberate modern-Java learning should determine this choice.
+   - The owner selected TypeScript/Colyseus after considering the Java learning alternative.
 
 ## Proposed direction, not accepted decisions
 
@@ -55,4 +55,4 @@ Use TypeScript with a pure rules package shared by a mobile web client, an autho
 
 For overlapping selections, recommend first valid arrival at the room owner, with one atomic clear and score update. Explain the network advantage honestly. Do not accept a client timestamp as proof that their selection happened first. Accept an older board revision when the fruit inside the submitted selection is unchanged; reject a selection whose intended fruit has changed.
 
-The repository currently contains research and design documents, not an implemented application. The conflict-ordering decision is captured in ADR 0001. Runtime, hosting provider, and library choices remain recommendations. The language comparison is in [technology-options.md](research/technology-options.md).
+The first room/board transport slice is described in [versus rooms](versus-rooms.md); a playable match and browser UI remain future work. The conflict-ordering decision is captured in ADR 0001. TypeScript/Node/Colyseus is accepted in ADR 0003; hosting remains open. The language comparison is in [technology-options.md](research/technology-options.md).

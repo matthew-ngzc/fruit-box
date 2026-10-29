@@ -1,6 +1,6 @@
 # Language and runtime options
 
-Checked 29 October 2026, Singapore time. The user is comfortable considering TypeScript, learned Java 8, is interested in modern Java, considers Python an option, and has no Rust experience. No backend choice is accepted yet.
+Checked 29 October 2026, Singapore time. The user is comfortable considering TypeScript, learned Java 8, is interested in modern Java, considers Python an option, and has no Rust experience. Historical comparison: the owner subsequently accepted TypeScript/Node/Colyseus on this date; see [ADR 0003](../adr/0003-typescript-colyseus.md).
 
 ## Language versus runtime
 
@@ -75,4 +75,4 @@ Important runtime considerations:
 
 Other selection criteria: engine reuse and browser/server rule parity; room/reconnect library availability; ability to understand/debug/maintain the code; JSON/protocol validation; tooling and meaningful tests; hosting region and persistent-WebSocket support; memory/CPU cost; expected concurrent rooms; and whether CPU-heavy solvers are part of the live service. Keep the service warm during active matches and avoid database/API calls in clear arbitration unless the chosen durability requirements demand them.
 
-Measure round-trip time, server queue/processing delay, release-to-confirmation delay, and p95/p99 spikes under representative phone networks and concurrent-room load. Under the agreed first-arrival policy, differences in each player's network path can change close-conflict outcomes regardless of backend language. Language choice remains open; this discussion does not accept a new architecture decision.
+Measure round-trip time, server queue/processing delay, release-to-confirmation delay, and p95/p99 spikes under representative phone networks and concurrent-room load. Under the agreed first-arrival policy, differences in each player's network path can change close-conflict outcomes regardless of backend language. The comparison itself is research; the later owner decision is recorded in ADR 0003.

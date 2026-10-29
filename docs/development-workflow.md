@@ -4,7 +4,7 @@ GitHub Issues is the work tracker. GitHub PRs are the unit of delivery. The `gh`
 
 ## Shape before implementation
 
-`CONTEXT.md` defines domain terms; `docs/design-session.md` distinguishes confirmed rules from open decisions; `docs/adr/` records consequential choices. Research notes are evidence, not automatically accepted architecture. The initial backend, networking framework, and deployment route remain undecided.
+`CONTEXT.md` defines domain terms; `docs/design-session.md` distinguishes confirmed rules from open decisions; `docs/adr/` records consequential choices. Research notes are evidence, not automatically accepted architecture. TypeScript/Node/Colyseus is accepted in ADR 0003; the deployment route remains undecided.
 
 Synthesize agreed behavior into the parent specification issue. Extract small implementation issues that deliver observable behavior across the necessary layers. For example, prefer "two guests join a room and see the same board" over separate tickets for database schema, backend endpoints, and frontend components. Exploratory prototypes and decision tickets are appropriate when an implementation choice is unresolved.
 
@@ -26,7 +26,7 @@ Keep issues current when the design changes. Avoid turning every small edit into
 
 Work on a focused branch. Use public interfaces for behavior tests, one failing behavior followed by its implementation and refactoring. Multiplayer tests should exercise actual command ordering and recovery rather than mirror internal functions. Verify phone interaction on real devices when the behavior depends on touch, viewport, or app backgrounding.
 
-Use the repository's actual scripts and tooling as the source of truth for commands once an application exists. At bootstrap, this repository contains research and design only; there is no application build or test suite to claim as passing.
+Use the repository's scripts as the source of truth. The first room slice has TypeScript checks, rules/transport tests, a build and a compiled demo; see [room setup](versus-rooms.md). Those checks do not establish playable gameplay or device acceptance.
 
 ## Deliver through a PR
 
