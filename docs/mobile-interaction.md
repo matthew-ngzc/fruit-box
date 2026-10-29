@@ -29,3 +29,14 @@ Primary browser references: [Fullscreen user activation and rejection behavior](
 ## Verification
 
 Browser checks exercise a running Docker preview through real room creation and pointer/touch input. They cover forward/reverse box selection, sums/highlights and committed clears, touch endpoint preview, secondary-pointer rejection, cancellation, resize and pause cleanup, landscape bounds and fullscreen-unavailable/denied fallback. Existing unit/integration/container tests retain server-rule coverage. Test results, screenshots, recordings and unavailable engine/device checks are recorded in issue 17 and its PR, not assumed from this design description.
+
+
+## Captured preview evidence
+
+Chromium desktop and touch emulation passed forward/reverse selection, sum/highlight consistency and an authoritative clear, primary-pointer ownership, cancellation/resize/pause cleanup, touch magnifier and keyboard corner feedback. Landscape board/essential-control bounds passed at 844x390, 812x375 and 568x320. Fullscreen-unavailable/denied simulations kept Ready and manual rotation working. The real headless Chromium request was denied and produced the expected fallback; fullscreen entry/orientation-lock success on physical devices is not claimed. A cached WebKit automation attempt stalled and is not counted as Safari coverage.
+
+![Desktop box and sum](assets/mobile-selection/desktop-box.png)
+![Landscape touch endpoint and box](assets/mobile-selection/landscape-touch.png)
+![Portrait touch endpoint and box](assets/mobile-selection/portrait-touch.png)
+
+These are actual Docker-preview browser captures, not design mockups. The endpoint preview is transient and may cover the score/time area while dragging; the checkbox can disable it. Recording attempts stalled, so no gesture recording is attached or claimed verified. A concise recording and physical Android Brave/iPhone review remain pending. The original gameplay screenshot is preserved separately.
