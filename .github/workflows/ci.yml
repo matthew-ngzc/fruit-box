@@ -44,14 +44,44 @@ jobs:
       - name: Demonstrate compiled room transport
         run: node dist/scripts/room-demo.js
 
+  container:
+    name: Local Docker lifecycle
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      FRUIT_BOX_BIND: 127.0.0.1
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7.1.0
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: docker compose config --quiet
+      - run: docker compose up --build --detach --wait --wait-timeout 180
+      - run: node scripts/check_container.mjs
+      - run: docker compose stop
+      - name: Require stopped container
+        run: test -z "$(docker compose ps --status running --quiet)"
+      - run: docker compose up --detach --wait --wait-timeout 60
+      - run: node scripts/check_container.mjs
+      - name: Clean up local test containers
+        if: ${{ always() }}
+        run: docker compose down
+
   required:
     name: Required checks
     runs-on: ubuntu-latest
     timeout-minutes: 5
-    needs: [check]
+    needs: [check, container]
     if: ${{ always() }}
     steps:
       - name: Require every matrix job to succeed
         env:
           MATRIX_RESULT: ${{ needs.check.result }}
-        run: test "$MATRIX_RESULT" = success
+          CONTAINER_RESULT: ${{ needs.container.result }}
+        run: |
+          test "$MATRIX_RESULT" = success
+          test "$CONTAINER_RESULT" = success

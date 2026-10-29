@@ -8,16 +8,19 @@ CI is implemented in [.github/workflows/ci.yml](../.github/workflows/ci.yml). Ap
 - Pushes to `main` run the same checks, so the integrated revision is verified independently of the pre-merge branch. Other branch pushes do not duplicate the PR run.
 - `workflow_dispatch` permits a manual run once the workflow is present on the default branch. It does not make a not-yet-merged workflow dispatchable on GitHub.
 - New CI runs cancel obsolete runs for the same PR/ref. Matrix jobs have ten-minute limits, and the aggregate gate has five minutes.
-- `Required checks` runs after the matrix and succeeds only if the matrix result is success. Failure, cancellation, or skipping does not count as a successful matrix result. When additional mandatory jobs are introduced, add them to this gate and require all their results.
+- A Linux Docker job builds the local container, checks health and real HTTP/WebSocket clients, tests stop/start and removes its containers on completion. This does not publish images or deploy a service.
+- `Required checks` runs after the application matrix and Docker job and succeeds only if both results are success. Failure, cancellation, or skipping does not count as a successful matrix result. When additional mandatory jobs are introduced, add them to this gate and require all their results.
 - Checks run on GitHub-hosted runners with read-only repository permissions and no deployment credentials. Checkout does not retain credentials.
 
-The stable `Required checks` result can be selected in repository merge rules once this workflow is on main. This PR does not configure branch protection or claim that repository settings currently enforce it. Application type checking, rules/room tests and compilation now run in the same required matrix. No browser UI, deployment artifact publishing or hosted runtime verification is claimed.
+The stable `Required checks` result can be selected in repository merge rules once this workflow is on main. This PR does not configure branch protection or claim that repository settings currently enforce it. Application type checking, rules/room tests and compilation now run in the same required matrix. The browser bundle builds with the application. Container build/lifecycle checks are local CI evidence; production publishing and hosted deployment remain unimplemented.
 
 ```mermaid
 flowchart TD
     PR[Pull request] --> Matrix[Linux, macOS and Windows context and application checks]
     Manual[Manual run after workflow reaches default branch] --> Matrix
+    PR --> Container[Linux Docker build and lifecycle]
     Matrix --> Gate{Every required check succeeded?}
+    Container --> Gate
     Gate -->|No| Stop[CI fails]
     Gate -->|Yes| Green[Required checks passes]
     Green --> Review[Human PR review and merge]
