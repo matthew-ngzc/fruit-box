@@ -30,11 +30,11 @@ export class VersusRoom extends Room<{ state: RoomState }> {
 function nicknameFrom(options: unknown): string {
   const nickname = options && typeof options === 'object' && 'nickname' in options ? options.nickname : undefined;
   if (typeof nickname !== 'string' || nickname.length > 100 || /[\p{Cc}\p{Cf}]/u.test(nickname)) {
-    throw new ServerError(400, 'Nickname must be 1–24 characters without control characters');
+    throw new ServerError(400, 'Nickname must be 1-24 characters without control characters');
   }
   const trimmed = nickname.trim();
   if ([...trimmed].length < 1 || [...trimmed].length > 24) {
-    throw new ServerError(400, 'Nickname must be 1–24 characters without control characters');
+    throw new ServerError(400, 'Nickname must be 1-24 characters without control characters');
   }
   return trimmed;
 }
