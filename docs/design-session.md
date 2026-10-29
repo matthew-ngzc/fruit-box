@@ -38,7 +38,7 @@ Updated: 29 October 2026 (Asia/Singapore).
    - Hide board and cancel drags during pause; ignore additional pause requests without charge (confirmed).
    - Trust model: casual validation vs stronger ranked enforcement (recommend casual validation).
 3. Platform: browser first (confirmed).
-   - Touch selection, board orientation and phone usability (open; test on actual phones).
+   - Owner reported successful two-player play on Android Brave, with finger occlusion and small portrait fruit; requested combined box/highlights and landscape/fullscreen where supported. Revised [mobile interaction](mobile-interaction.md) remains a device-review preview.
    - Optional home-screen installation (proposed).
 4. Geography: Singapore, sometimes same room/Wi-Fi (confirmed).
    - Singapore server proposed; validate actual round-trip times on the two phones.
