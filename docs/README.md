@@ -1,6 +1,6 @@
 # Fruit Box research and design
 
-Research date: 29 October 2026 (Singapore time). The first TypeScript/Colyseus room transport slice is implemented; a playable match and browser UI remain future work.
+Research date: 29 October 2026 (Singapore time). The TypeScript/Colyseus browser match is playable locally; physical iPhone/Android acceptance and hosting remain pending.
 
 1. [Repository and deployment](research/repository.md): inspected commit, game engine, generator, UI, running instructions, docs, tests, license, and limits of the public repo's relationship to the live site.
 2. [Origins and board generation](research/origins-and-generation.md): original 2007 release, 2019 HTML5 update, newer 2026 project dates, and exact generator comparison.

@@ -141,8 +141,15 @@ element('ready').onclick = () => room?.send('ready');
 element('pause').onclick = () => send('pause');
 element('resume').onclick = () => send('resume');
 element('copy').onclick = async () => { try { await navigator.clipboard.writeText(location.href); message('Invite link copied.'); } catch { message(`Share this address: ${location.href}`); } };
+element('new-room').onclick = async event => {
+  event.preventDefault();
+  await room?.leave();
+  sessionStorage.removeItem('rejoin');
+  location.href = '/';
+};
 const token = sessionStorage.getItem('rejoin');
-if (token) {
+const invitedRoom = new URLSearchParams(location.search).get('room');
+if (token && (!invitedRoom || token.split(':')[0] === invitedRoom)) {
   message('Trying to rejoin your match…');
   sdk.reconnect<RoomState>(token).then(attach).catch(() => { sessionStorage.removeItem('rejoin'); message('Previous match unavailable. Create or join a room.'); });
 }

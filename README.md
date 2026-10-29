@@ -2,7 +2,7 @@
 
 A personal Fruit Box project exploring solo play and real-time competition between friends on a shared board, accessible from iPhone and Android browsers.
 
-TypeScript, Node and Colyseus are accepted. The first server slice connects two guests to a private room with an identical certified board; timed gameplay and browser UI remain future work. See [room setup and demo](docs/versus-rooms.md). Hosting remains undecided.
+TypeScript, Node and Colyseus are accepted. The local browser implementation supports a timed two-player shared-board match with authoritative clears, scores, pauses and reconnection. See [playable versus setup](docs/versus-gameplay.md); physical-phone acceptance remains pending. Hosting remains undecided.
 
 ## Continue with an agent
 
