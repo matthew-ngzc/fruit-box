@@ -152,9 +152,11 @@ it('starts only after both guests ready and synchronizes a confirmed clear', asy
   first.send('command', { type: 'pause', id: 1 });
   await waitFor(second, () => second.state.phase === 'paused');
   expect(second.state.players.get(first.sessionId)?.pauses).toBe(1);
+  expect(second.state.pausedBy).toBe(first.sessionId);
   first.send('command', { type: 'resume', id: 2 });
   second.send('command', { type: 'resume', id: 1 });
   await waitFor(second, () => second.state.phase === 'playing');
+  expect(second.state.pausedBy).toBe('');
 });
 
 it('arbitrates conflicting network clears once and restores identity/score after a drop', async () => {
@@ -209,6 +211,7 @@ it('replays solo in the same room with fresh score, board, time and pause budget
     expect(solo.state.players.get(solo.sessionId)?.score).toBe(0);
     expect(solo.state.players.get(solo.sessionId)?.pauses).toBe(2);
     expect(solo.state.remainingMs).toBe(120000);
+    expect(solo.state.pausedBy).toBe('');
     expect(solo.state.board.toJSON()).not.toEqual(original);
     expect([...solo.state.board].every(value => value > 0)).toBe(true);
     const result = new Promise<{ok:boolean;reason:string}>(resolve => solo.onMessage('result', resolve));
@@ -266,4 +269,36 @@ it('restarts versus only after both guests confirm the finished round and never 
     expect(a.state.round).toBe(2);
     await expect(sdk.reconnect(token)).rejects.toThrow();
   } finally { clock.mockRestore(); }
+});
+
+it('preserves the pause owner across rejected pauses and reconnect, then replaces it only for a new pause', async () => {
+  const sdk = new Client(running.url);
+  const a = connect(await sdk.create<RoomState>('versus', { nickname: 'Alice' }));
+  const b = connect(await sdk.joinById<RoomState>(a.roomId, { nickname: 'Bob' }));
+  await waitFor(b, () => b.state?.players?.size === 2);
+  a.send('ready'); b.send('ready');
+  await waitFor(a, () => a.state.phase === 'playing');
+  a.send('command', { type: 'pause', id: 1 });
+  await waitFor(b, () => b.state.phase === 'paused');
+  expect(b.state.pausedBy).toBe(a.sessionId);
+  const rejected = new Promise<{ok:boolean}>(resolve => b.onMessage('result', resolve));
+  b.send('command', { type: 'pause', id: 1 });
+  expect((await rejected).ok).toBe(false);
+  expect(b.state.pausedBy).toBe(a.sessionId);
+  const token = a.reconnectionToken;
+  a.reconnection.enabled = false;
+  await a.leave(false);
+  await waitFor(b, () => b.state.players.get(a.sessionId)?.connected === false);
+  expect(b.state.pausedBy).toBe(a.sessionId);
+  const recovered = connect(await sdk.reconnect<RoomState>(token));
+  await waitFor(recovered, () => recovered.state?.players?.get(a.sessionId)?.connected === true);
+  expect(recovered.state.pausedBy).toBe(a.sessionId);
+  expect(recovered.state.players.get(recovered.state.pausedBy)?.nickname).toBe('Alice');
+  recovered.send('command', { type: 'resume', id: 2 });
+  b.send('command', { type: 'resume', id: 2 });
+  await waitFor(b, () => b.state.phase === 'playing');
+  expect(b.state.pausedBy).toBe('');
+  b.send('command', { type: 'pause', id: 3 });
+  await waitFor(recovered, () => recovered.state.phase === 'paused');
+  expect(recovered.state.pausedBy).toBe(b.sessionId);
 });

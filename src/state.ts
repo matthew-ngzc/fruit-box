@@ -10,5 +10,6 @@ export const RoomState = schema({
   phase: t.string().default('waiting'),
   remainingMs: t.number().default(120000),
   pauseRemainingMs: t.number().default(0),
+  pausedBy: t.string().default(''),
 }, 'RoomState');
 export type RoomState = SchemaType<typeof RoomState>;

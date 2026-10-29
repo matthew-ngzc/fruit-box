@@ -39,3 +39,5 @@ Research date: 29 October 2026 (Singapore time). The TypeScript/Colyseus browser
 [Solo play preview](solo-play.md): one-player entry, shared match/interface rules, mode-specific display and verification.
 
 [Same-room rematch decision](adr/0005-rematch-in-the-same-room.md): solo replay and both-player consent, round resets and lifecycle.
+
+[Interface wording](interface-copy.md): direct labels, factual status, named pauses and concise instructions.

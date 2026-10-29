@@ -4,6 +4,7 @@ export class Match {
   phase: 'playing' | 'paused' | 'finished' = 'playing';
   remainingMs = 120000;
   pauseRemainingMs = 0;
+  pausedBy = '';
   private updatedAt: number;
 
   constructor(board: number[], players: string[], now: number, readonly columns = 17) {
@@ -28,6 +29,7 @@ export class Match {
   private resume() {
     this.phase = 'playing';
     this.pauseRemainingMs = 0;
+    this.pausedBy = '';
     for (const player of Object.values(this.players)) player.ready = false;
   }
 
@@ -47,6 +49,7 @@ export class Match {
       player.pauses--;
       this.phase = 'paused';
       this.pauseRemainingMs = 30000;
+      this.pausedBy = playerId;
       return { ok: true, reason: 'Paused' };
     }
     if (command.type === 'resume' && this.phase === 'paused') {
