@@ -5,7 +5,7 @@ Date: 2026-10-30 (Asia/Singapore)
 
 ## Context
 
-The owner requested Play again in solo and versus, then explicitly confirmed that versus preserves its players/room and waits for both players, while solo restarts immediately. Requiring a new invite after every round adds friction; allowing either guest to reset for both would discard the other's result without consent. [Issue 21](https://github.com/matthew-ngzc/fruit-box/issues/21) owns delivery.
+The owner requested Play again in solo and versus, then explicitly confirmed that versus preserves its players/room and waits for both players, while solo restarts immediately. Requiring a new invite after every round adds friction; allowing either guest to reset for both would discard the other's result without consent. [Issue 21](https://github.com/matthew-ngzc/fruit-box/issues/21) owns delivery through [PR 22](https://github.com/matthew-ngzc/fruit-box/pull/22).
 
 ## Decision
 

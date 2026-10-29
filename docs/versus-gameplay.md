@@ -30,7 +30,7 @@ stateDiagram-v2
     Finished --> [*]: No connected guests remain
 ```
 
-[ADR 0004](adr/0004-confirm-clears-and-rejoin.md) records the accepted confirmation/rejoin choices. [Licensing](licensing.md) records source reuse and notice obligations. [Issue 13](https://github.com/matthew-ngzc/fruit-box/issues/13) owns delivery.
+[ADR 0004](adr/0004-confirm-clears-and-rejoin.md) records the accepted confirmation/rejoin choices. [Licensing](licensing.md) records source reuse and notice obligations. [Issue 13](https://github.com/matthew-ngzc/fruit-box/issues/13) owns initial delivery; [issue 21](https://github.com/matthew-ngzc/fruit-box/issues/21) owns rematches, sharing and pause-control changes.
 
 ## Verification and limitations
 
