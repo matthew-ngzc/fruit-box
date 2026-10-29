@@ -30,6 +30,8 @@ Pure rule tests use known center coordinates to verify all four strict edges, a 
 
 ## Pause and room sharing
 
-Pause hides the board with a full-viewport cover. The red Resume action is centered and at least 56px high in portrait and landscape. Versus shows waiting feedback until both choose it; solo resumes immediately. Finished rounds offer a central Play again action; the [gameplay contract](versus-gameplay.md) owns consent and reset rules.
+Pause hides the board with a full-viewport cover. The title identifies who paused as Paused by [nickname]. The red Resume action is centered and at least 56px high in portrait and landscape. Versus shows waiting feedback until both choose it; solo resumes immediately. Finished rounds offer a central Play again action; the [gameplay contract](versus-gameplay.md) owns consent and reset rules.
 
 Room sharing has distinct code and invite-link copy buttons. The [Clipboard API requires a secure context](https://developer.mozilla.org/en-US/docs/Web/API/Clipboard/writeText); a phone accessing a local Wi-Fi HTTP address may not expose it. The client attempts legacy copy from selected text if needed, and leaves a selectable field plus manual instructions if automatic copying is denied/unavailable. No success is claimed after a failed copy. Physical-browser clipboard and revised iPhone interaction still need device acceptance; Chrome verification distinguishes actual HTTP/clipboard readback from simulated denial/API absence.
+
+Use [plain interface wording](interface-copy.md) for labels and feedback. Earlier screenshots show previous copy and remain historical.

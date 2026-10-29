@@ -15,6 +15,7 @@ Updated: 30 October 2026 (Asia/Singapore).
 - Disconnects do not stop the clock; allow rejoins until the match finishes, retaining identity and score.
 - Either player can pause immediately, spending one of their two pause chances per game. Pauses last at most 30 seconds, with early resumption when both are ready.
 - Pauses hide the board from both players and cancel active drags. Ignore further pause requests while already paused without spending a chance.
+- Use short, direct interface wording without slogans or praise. Pause status identifies the player as Paused by [nickname], as requested on 30 October 2026. See [interface wording](interface-copy.md).
 - Play again keeps the same room and players: solo starts immediately after finish; versus starts a fresh board when both connected players confirm. Reset scores, timer and pause allowances. The owner explicitly accepted this flow on 30 October 2026; see [ADR 0005](adr/0005-rematch-in-the-same-room.md). Resume is a prominent red action centered on the pause screen.
 - Join through guest nicknames and private links/codes first; allow future accounts, including Google login.
 - Use TypeScript throughout, Node for the backend runtime, and Colyseus for rooms and synchronization. The owner accepted this choice on 29 October 2026; [ADR 0003](adr/0003-typescript-colyseus.md) records boundaries and trade-offs.

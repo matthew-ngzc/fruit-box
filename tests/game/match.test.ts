@@ -26,9 +26,11 @@ it('rejects deadline clears, ends on an empty board, and preserves ties', () => 
 it('accounts for delayed pause-expiry ticks and ignores malformed selections', () => {
   const match = new Match([4, 6, 4, 6], ['a', 'b'], 0, 2);
   match.command('a', { type: 'pause', id: 1 }, 1000);
+  expect(match.pausedBy).toBe('a');
   match.tick(32000);
   expect(match.remainingMs).toBe(118000);
   expect(match.phase).toBe('playing');
+  expect(match.pausedBy).toBe('');
   for (const [i, value] of [null, {}, { type: 'clear', top: -1 }, { type: 'clear', left: NaN }].entries()) {
     expect(match.command('a', { ...value, id: i + 2 }, 32000).ok).toBe(false);
   }

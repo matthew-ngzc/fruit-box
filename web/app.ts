@@ -19,7 +19,7 @@ const cells: HTMLDivElement[] = [];
 const code = element<HTMLInputElement>('room-code');
 code.value = new URLSearchParams(location.search).get('room') ?? '';
 code.addEventListener('input', updateJoin);
-function updateJoin() { element('join').textContent = code.value.trim() ? 'Join room ↗' : 'Create a room ↗'; }
+function updateJoin() { element('join').textContent = code.value.trim() ? 'Join room' : 'Create room'; }
 updateJoin();
 function send(type: string, extra = {}) {
   if (!room || !connected) return;
@@ -53,7 +53,7 @@ function submit() {
   if (!room) return;
   const { fruit, sum } = inspectDrawnRectangle();
   if (sum !== 10) {
-    message(fruit.length ? `This box totals ${sum}. Aim for 10.` : 'Draw a box around fruit centers totaling 10.');
+    message(fruit.length ? `Total: ${sum}. Select 10.` : 'Select apples totaling 10.');
     cancelSelection(); renderSelection(); return;
   }
   pending = true;
@@ -75,7 +75,7 @@ function renderSelection() {
   }
   const visible = !!bounds && bounds.right > bounds.left && bounds.bottom > bounds.top && state.phase === 'playing' && connected;
   box.hidden = sumBadge.hidden = !visible;
-  const description = pending ? 'Waiting for server confirmation…' : visible ? `Sum ${inspected.sum} / 10 · ${ids.size} apples` : 'Draw a box around fruit centers · aim for 10';
+  const description = pending ? 'Checking…' : visible ? `Total: ${inspected.sum} / 10 · Apples: ${ids.size}` : 'Drag a box to make 10.';
   if (element('selection').textContent !== description) element('selection').textContent = description;
   if (!visible || !bounds || !end) return;
   const parent = box.parentElement!;
@@ -84,7 +84,7 @@ function renderSelection() {
   const originY = boardBounds.top - parentBounds.top - parent.clientTop;
   Object.assign(box.style, { left: `${originX + bounds.left}px`, top: `${originY + bounds.top}px`, width: `${bounds.right - bounds.left}px`, height: `${bounds.bottom - bounds.top}px` });
   box.className = `${inspected.sum === 10 ? 'valid' : ''}${pending ? ' pending' : ''}`;
-  sumBadge.textContent = pending ? '10 · sending' : `${inspected.sum} / 10${inspected.sum === 10 ? ' ✓' : ''}`;
+  sumBadge.textContent = pending ? 'Checking…' : `${inspected.sum} / 10${inspected.sum === 10 ? ' ✓' : ''}`;
   sumBadge.classList.toggle('valid', inspected.sum === 10);
   const badgeWidth = sumBadge.offsetWidth, badgeHeight = sumBadge.offsetHeight;
   const x = Math.max(0, Math.min(parent.clientWidth - badgeWidth, originX + end.x - badgeWidth / 2));
@@ -115,21 +115,22 @@ function render() {
   element('game').dataset.mode = solo ? 'solo' : 'versus';
   element('game').dataset.phase = state.phase;
   document.title = `Fruit Box · ${solo ? 'Solo' : 'Versus'}`;
-  element('game-mode').textContent = solo ? 'SOLO PLAY' : 'SHARED-BOARD COMPETITION';
+  element('game-mode').textContent = solo ? 'SOLO' : 'VERSUS';
   element('room-invite').hidden = solo;
   element('new-room').textContent = 'New game';
   const players = [...state.players.entries()];
+  const opponentName = players.find(([id]) => id !== room!.sessionId)?.[1].nickname ?? 'the other player';
   element('scores').replaceChildren(...players.map(([id, player]) => {
     const div = document.createElement('div'); div.className = 'score';
     const label = document.createElement('span'); label.textContent = player.nickname + (id === room!.sessionId && !solo ? ' (you)' : '');
-    const detail = document.createElement('small'); detail.textContent = `${player.connected ? 'Connected' : 'Reconnecting…'} · ${player.pauses} pauses left`;
+    const detail = document.createElement('small'); detail.textContent = `${player.connected ? 'Connected' : 'Disconnected'} · Pauses left: ${player.pauses}`;
     label.append(detail); const score = document.createElement('b'); score.textContent = String(player.score); div.append(label, score); return div;
   }));
   const seconds = Math.ceil(state.remainingMs / 1000);
   element('time').textContent = `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
   const self = state.players.get(room!.sessionId);
-  element('ready').textContent = solo ? 'Start solo round' : "I'm ready";
-  element('resume').textContent = self?.ready ? 'Waiting for your friend…' : 'Resume';
+  element('ready').textContent = solo ? 'Start' : 'Ready';
+  element('resume').textContent = self?.ready ? `Waiting for ${opponentName}…` : 'Resume';
   element<HTMLButtonElement>('ready').hidden = state.phase !== 'waiting';
   element<HTMLButtonElement>('ready').disabled = !connected || !!self?.ready;
   element<HTMLButtonElement>('pause').hidden = state.phase !== 'playing';
@@ -139,20 +140,20 @@ function render() {
   const allConnected = players.length === (solo ? 1 : 2) && players.every(([, player]) => player.connected);
   element('play-again').hidden = state.phase !== 'finished';
   element<HTMLButtonElement>('play-again').disabled = !connected || !allConnected || !!self?.ready;
-  element('play-again').textContent = self?.ready ? 'Waiting for your friend…' : 'Play again';
+  element('play-again').textContent = self?.ready ? `Waiting for ${opponentName}…` : 'Play again';
   element('rematch-status').hidden = state.phase !== 'finished' || solo;
-  element('rematch-status').textContent = !allConnected ? 'Your friend has left. Choose New game to invite someone again.'
-    : players.filter(([, player]) => player.ready).map(([, player]) => `${player.nickname} is ready.`).join(' ') || 'Both players choose Play again to start a fresh board.';
+  element('rematch-status').textContent = !allConnected ? `${opponentName} disconnected. Select New game to start another room.`
+    : players.filter(([, player]) => player.ready).map(([, player]) => `${player.nickname}: ready.`).join(' ') || 'Both players must select Play again.';
   if (state.phase === 'waiting') {
-    element('cover-title').textContent = solo ? 'Ready for a solo round?' : players.length < 2 ? 'Waiting for your friend' : 'Ready when you are';
-    element('cover-detail').textContent = solo ? 'Start a 120-second round whenever you are ready.' : self?.ready ? 'You are ready. Waiting for your friend.' : 'Share the invite link. Both players choose “I’m ready” to begin.';
+    element('cover-title').textContent = solo ? 'Solo' : players.length < 2 ? 'Waiting for player' : 'Ready to start';
+    element('cover-detail').textContent = solo ? 'Select Start to play.' : self?.ready ? `Waiting for ${opponentName} to start.` : players.length < 2 ? 'Share the room code or invite link.' : 'Both players must select Ready.';
   } else if (state.phase === 'paused') {
-    element('cover-title').textContent = 'A little breather.';
-    element('cover-detail').textContent = `Resumes in ${Math.ceil(state.pauseRemainingMs / 1000)}s, or ${solo ? 'tap Resume to continue' : self?.ready ? 'when your friend taps Resume' : 'when you both tap Resume'}.`;
+    element('cover-title').textContent = state.players.get(state.pausedBy) ? `Paused by ${state.players.get(state.pausedBy)!.nickname}` : 'Paused';
+    element('cover-detail').textContent = `Resumes in ${Math.ceil(state.pauseRemainingMs / 1000)}s. ${solo ? 'Select Resume to continue.' : self?.ready ? `Waiting for ${opponentName}.` : 'Both players must select Resume.'}`;
   } else if (state.phase === 'finished') {
     const scores = players.map(([, player]) => player.score);
-    element('cover-title').textContent = solo ? 'Round complete. Well played!' : scores[0] === scores[1] ? 'A draw. Well played!' : `${players[scores[0] > scores[1] ? 0 : 1][1].nickname} wins!`;
-    element('cover-detail').textContent = solo ? `Final score: ${scores[0]} apples. Play again for a fresh board.` : 'Round finished. Keep your room and play another round.';
+    element('cover-title').textContent = solo ? 'Game over' : scores[0] === scores[1] ? 'Draw' : `${players[scores[0] > scores[1] ? 0 : 1][1].nickname} wins`;
+    element('cover-detail').textContent = solo ? `Score: ${scores[0]}` : players.map(([, player]) => `${player.nickname}: ${player.score}`).join(' · ');
     sessionStorage.removeItem('rejoin');
   }
   renderSelection();
@@ -165,15 +166,15 @@ function attach(joined: Room<RoomState>) {
   element('room-id').textContent = joined.roomId;
   history.replaceState(null, '', `?room=${encodeURIComponent(joined.roomId)}`);
   joined.onStateChange(render);
-  joined.onMessage('result', (result: { ok: boolean; reason: string }) => { cancelSelection(); message(result.reason); render(); });
-  joined.onDrop(() => { connected = false; cancelSelection(); message('Connection lost. Reconnecting… The match clock continues.'); render(); });
+  joined.onMessage('result', (result: { ok: boolean; reason: string }) => { cancelSelection(); message(result.ok ? '' : result.reason); render(); });
+  joined.onDrop(() => { connected = false; cancelSelection(); message('Disconnected. Reconnecting… The timer is still running.'); render(); });
   joined.onReconnect(() => { connected = true; sessionStorage.setItem('rejoin', joined.reconnectionToken); message('Reconnected.'); render(); });
   joined.onLeave(() => {
     connected = false; cancelSelection();
     if (joined.state?.phase === 'playing' || joined.state?.phase === 'paused') {
-      message('Connection unavailable. Reload to try rejoining before the match finishes.');
+      message('Disconnected. Reload to rejoin before the round ends.');
     } else {
-      sessionStorage.removeItem('rejoin'); message('Room closed. Create a new room to play.');
+      sessionStorage.removeItem('rejoin'); message('Room closed. Start a new game.');
     }
     render();
   });
@@ -229,14 +230,14 @@ function updateViewControls() {
   element<HTMLButtonElement>('fullscreen').disabled = !available && !fullscreen;
   const hint = element('view-hint');
   hint.classList.toggle('unsupported', !available);
-  hint.textContent = !available ? 'This browser cannot fullscreen the game. Rotate your phone for landscape play.'
-    : matchMedia('(max-width: 900px) and (orientation: portrait)').matches ? 'Turn your phone sideways for a larger board.' : '';
+  hint.textContent = !available ? 'Fullscreen is not supported. Rotate your phone to play in landscape.'
+    : matchMedia('(max-width: 900px) and (orientation: portrait)').matches ? 'Rotate your phone for a larger board.' : '';
 }
 async function enterPlayView() {
   try {
     if (!document.fullscreenElement) {
       if (!document.fullscreenEnabled || !document.documentElement.requestFullscreen) {
-        message('Fullscreen is unavailable here. Turn your phone sideways; landscape play still works.');
+        message('Fullscreen is not supported. Rotate your phone to play in landscape.');
         return;
       }
       await document.documentElement.requestFullscreen();
@@ -245,13 +246,13 @@ async function enterPlayView() {
     const orientation = screen.orientation as ScreenOrientation & { lock?: (orientation: string) => Promise<void> };
     if (orientation?.lock) {
       try { await orientation.lock('landscape'); }
-      catch { message('Turn your phone sideways for landscape play.'); }
-    } else if (matchMedia('(orientation: portrait)').matches) message('Turn your phone sideways for landscape play.');
-  } catch { message('Fullscreen was not allowed. You can still turn your phone sideways and play.'); }
+      catch { message('Rotate your phone to play in landscape.'); }
+    } else if (matchMedia('(orientation: portrait)').matches) message('Rotate your phone to play in landscape.');
+  } catch { message('Fullscreen was blocked. Rotate your phone to play in landscape.'); }
   finally { updateViewControls(); }
 }
 element('fullscreen').onclick = () => {
-  if (document.fullscreenElement) void document.exitFullscreen().catch(() => message('Use your browser’s fullscreen exit control.'));
+  if (document.fullscreenElement) void document.exitFullscreen().catch(() => message('Exit fullscreen using your browser controls.'));
   else void enterPlayView();
 };
 document.addEventListener('fullscreenchange', () => { cancelSelection(); renderSelection(); updateViewControls(); });
@@ -286,7 +287,7 @@ async function copyRoomText(kind: 'code' | 'link') {
   input.value = text; input.focus(); input.select(); input.setSelectionRange(0, text.length);
   let copied = false;
   try { copied = document.execCommand('copy'); } catch { /* Manual selection remains available. */ }
-  message(copied ? `${label} copied.` : `Automatic copy unavailable. Copy the selected ${kind === 'code' ? 'room code' : 'invite link'} below.`);
+  message(copied ? `${label} copied.` : `Copy the selected ${kind === 'code' ? 'room code' : 'invite link'} manually.`);
 }
 element('copy').onclick = () => { void copyRoomText('link'); };
 element('copy-code').onclick = () => { void copyRoomText('code'); };
@@ -301,6 +302,6 @@ element('new-room').onclick = async event => {
 const token = sessionStorage.getItem('rejoin');
 const invitedRoom = new URLSearchParams(location.search).get('room');
 if (token && (!invitedRoom || token.split(':')[0] === invitedRoom)) {
-  message('Trying to rejoin your match…');
-  sdk.reconnect<RoomState>(token).then(attach).catch(() => { sessionStorage.removeItem('rejoin'); message('Previous match unavailable. Create or join a room.'); });
+  message('Reconnecting…');
+  sdk.reconnect<RoomState>(token).then(attach).catch(() => { sessionStorage.removeItem('rejoin'); message('Room unavailable. Create or join a room.'); });
 }

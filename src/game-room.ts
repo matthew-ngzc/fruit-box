@@ -99,6 +99,7 @@ export class GameRoom extends Room<{ state: RoomState }> {
     this.state.phase = this.match.phase;
     this.state.remainingMs = this.match.remainingMs;
     this.state.pauseRemainingMs = this.match.pauseRemainingMs;
+    this.state.pausedBy = this.match.pausedBy;
     this.match.board.forEach((value, index) => { this.state.board[index] = value; });
     for (const [id, player] of Object.entries(this.match.players)) {
       const publicPlayer = this.state.players.get(id)!;
