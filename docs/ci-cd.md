@@ -8,7 +8,7 @@ CI is implemented in [.github/workflows/ci.yml](../.github/workflows/ci.yml). Ap
 - Pushes to `main` run the same checks, so the integrated revision is verified independently of the pre-merge branch. Other branch pushes do not duplicate the PR run.
 - `workflow_dispatch` permits a manual run once the workflow is present on the default branch. It does not make a not-yet-merged workflow dispatchable on GitHub.
 - New CI runs cancel obsolete runs for the same PR/ref. Matrix jobs have ten-minute limits, and the aggregate gate has five minutes.
-- A Linux Docker job builds the local container, checks health and real HTTP/WebSocket clients, tests stop/start and removes its containers on completion. This does not publish images or deploy a service.
+- A Linux Docker job builds the local container, checks health and real HTTP/WebSocket clients, tests stop/start, then checks the separate loopback/read-only/resource-limited temporary-host profile. It removes both profiles' containers on completion. This does not publish images or deploy a service.
 - `Required checks` runs after the application matrix and Docker job and succeeds only if both results are success. Failure, cancellation, or skipping does not count as a successful matrix result. When additional mandatory jobs are introduced, add them to this gate and require all their results.
 - Checks run on GitHub-hosted runners with read-only repository permissions and no deployment credentials. Checkout does not retain credentials.
 

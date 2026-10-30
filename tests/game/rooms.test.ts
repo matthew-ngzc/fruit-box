@@ -26,7 +26,7 @@ async function waitFor(room: Room<RoomState>, condition: () => boolean) {
     room.onStateChange(changed);
   });
 }
-beforeAll(async () => { running = await startServer(0); });
+beforeAll(async () => { running = await startServer(0, '127.0.0.1', { http: { requestBurst: 1000 }, rooms: { creationBurst: 100, maxRooms: 100 } }); });
 afterAll(async () => {
   await Promise.all(rooms.map(room => room.leave()));
   await running.server.gracefullyShutdown(false);

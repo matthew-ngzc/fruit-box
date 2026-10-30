@@ -1,10 +1,11 @@
-import { Room, ServerError, type Client } from '@colyseus/core';
+import { CloseCode, Room, ServerError, type Client } from '@colyseus/core';
 import { createCertifiedBoard } from './rules.js';
 import { RoomState, Player } from './state.js';
 import { Match } from './match.js';
 
 export class GameRoom extends Room<{ state: RoomState }> {
   maxClients = 2;
+  maxMessagesPerSecond = 20;
   state = new RoomState();
   private match?: Match;
   private reconnections = new Map<string, ReturnType<GameRoom['allowReconnection']>>();
@@ -68,7 +69,10 @@ export class GameRoom extends Room<{ state: RoomState }> {
     }
   }
 
-  async onDrop(client: Client) {
+  async onDrop(client: Client, code?: number) {
+    // WITH_ERROR is also used when a reconnect races the old socket's close.
+    // Close that socket before waiting, so reconnect cannot strand the old reference.
+    if (code === CloseCode.WITH_ERROR) client.leave(CloseCode.WITH_ERROR);
     if (!this.match || this.match.phase === 'finished') return;
     this.state.players.get(client.sessionId)!.connected = false;
     const pending = this.allowReconnection(client, 'manual');
@@ -117,6 +121,43 @@ export class GameRoom extends Room<{ state: RoomState }> {
 
 export class SoloRoom extends GameRoom {
   override maxClients = 1;
+}
+
+export interface RoomLimits {
+  maxRooms: number;
+  creationBurst: number;
+  creationRefillMs: number;
+}
+
+// One budget per running server, shared by both modes and every matchmaking alias.
+// Never derive this budget from a client option or a forwarded IP header.
+export function createRoomTypes(overrides: Partial<RoomLimits> = {}) {
+  const limits = { maxRooms: 32, creationBurst: 4, creationRefillMs: 1000, ...overrides };
+  for (const value of Object.values(limits)) {
+    if (!Number.isSafeInteger(value) || value < 1) throw new Error('Room limits must be positive safe integers');
+  }
+  const active = new Set<GameRoom>();
+  let tokens = limits.creationBurst, updatedAt = performance.now();
+  class AdmittedRoom extends GameRoom {
+    override async onCreate(options: unknown) {
+      nicknameFrom(options);
+      if (active.size >= limits.maxRooms) throw new ServerError(503, 'Room capacity reached; try again later');
+      const now = performance.now();
+      tokens = Math.min(limits.creationBurst, tokens + Math.max(0, now - updatedAt) / limits.creationRefillMs);
+      updatedAt = now;
+      if (tokens < 1) throw new ServerError(429, 'Room creation is busy; try again shortly');
+      tokens--;
+      active.add(this);
+      try { await super.onCreate(options); }
+      catch (error) { active.delete(this); throw error; }
+    }
+
+    onDispose() { active.delete(this); }
+  }
+  class AdmittedSoloRoom extends AdmittedRoom {
+    override maxClients = 1;
+  }
+  return { versus: AdmittedRoom, solo: AdmittedSoloRoom };
 }
 
 function nicknameFrom(options: unknown): string {

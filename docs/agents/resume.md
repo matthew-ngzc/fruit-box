@@ -8,7 +8,7 @@ The repository is the durable context. A desktop chat, a global skill installati
 - An agent able to read/edit files and run the selected project's tools. Codex can discover `.agents/skills/`; other agents can read those files directly through the catalog.
 - Python 3 for the repository's agent-setup/documentation check. This is a maintenance tool, not a backend-language choice.
 - Optional Docker Desktop/Compose v2 for the [visible local game server](../local-docker.md); this does not select production hosting.
-- Node 22.12+ and npm for the accepted TypeScript/Colyseus stack; run `npm ci`. See [room setup](../versus-rooms.md).
+- Patched Node 22.23.4+, 24.22.1+ or 26.12.1+ within those release lines and npm for the accepted TypeScript/Colyseus stack; run `npm ci`. See [room setup](../versus-rooms.md) and [temporary-host security checks](../temporary-hosting.md).
 
 ## Resume sequence
 

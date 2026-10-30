@@ -43,6 +43,8 @@ Changing binding/port recreates the container. Compose `start` keeps its existin
 
 The Node base image is pinned by digest; updating that digest is an explicit maintenance change.
 
+The digest currently resolves to Node 22.23.4 with the October 2026 fixes. For the requested Caddy/tunnel hosting route use the separate [temporary hosting profile](temporary-hosting.md), whose loopback binding and container limits differ from this LAN-testing profile. Container/host CVE scanning and patching remain separate checks.
+
 The multi-stage [Dockerfile](../Dockerfile) builds the browser and TypeScript server with the lockfile, then installs production dependencies in a separate non-root Node 22 runtime. It includes the browser files, compiled rules/server and upstream MIT notice. A whitelist [.dockerignore](../.dockerignore) excludes Git, environment files, credentials, local dependencies, screenshots and unrelated workspace data from the context. A root-page healthcheck gives an explicit healthy/unhealthy status; HTTP health alone is not proof of multiplayer correctness.
 
 [The container smoke check](../scripts/check_container.mjs) validates page, bundle, CSS, MIT notice and real SDK guests starting a match, seeing the same board, pausing/resuming and reconnecting through the published HTTP/WebSocket port. Run `node scripts/check_container.mjs` with a healthy default-port container, or set `FRUIT_BOX_TEST_URL` for an alternate test address. The script creates temporary matches; stopping the local test container cleans them up. CI checks the Linux build, smoke flow and stop/start, with teardown even on failure. The existing cross-platform game checks remain required too.

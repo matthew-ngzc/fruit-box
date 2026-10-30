@@ -4,7 +4,7 @@ This first implementation slice lets two guest clients create/join an unlisted C
 
 ## Run and demonstrate
 
-Use Node 22.12 or newer and npm. The lockfile pins dependency resolution.
+Use patched Node 22.23.4+, 24.22.1+ or 26.12.1+ within those release lines and npm. Native startup refuses pre-fix runtimes; the lockfile pins dependency resolution.
 
 ```sh
 npm ci
@@ -38,7 +38,7 @@ sequenceDiagram
     participant R as Pure rules
     participant B as Guest Bob
     A->>S: create versus (nickname)
-    S->>S: Validate nickname, make room unlisted
+    S->>S: Validate nickname and shared admission budget, make room unlisted
     S->>R: Generate certified board once
     R-->>S: Fruit and full-clear certificate
     S-->>A: Room ID and public snapshot
@@ -51,6 +51,8 @@ sequenceDiagram
 ## Ownership and limits
 
 [The pure rules module](../src/rules.ts) exposes certified generation and immutable inspection/clearing, without importing Colyseus. The pinned MIT generator is [vendored with provenance](../vendor/fruit-box-game/README.md). [The room](../src/game-room.ts) owns the public state and admission. Generation happens synchronously during room setup and before each accepted rematch; this can delay other rooms on the Node event loop. No latency/load guarantees are claimed. A worker/precomputed board pool belongs before scaling, not inside live clear handling.
+
+The running server registers both modes through one admission budget before generation: 32 live rooms, a four-room creation burst and one creation token replenished each second. Invalid nicknames do not consume a slot; disposal or failed creation releases capacity. Existing joins/reconnects do not spend creation tokens. Guests have a finite protocol message rate. Framework body parsing has byte, deadline and concurrent-read budgets; see [temporary hosting](temporary-hosting.md#application-limits-and-remaining-exposure) for the exact contract and deployment limits. Real HTTP/SDK regressions cover those boundaries alongside gameplay.
 
 Rooms are in memory in one process; shutdown loses them. Leaving releases a seat; an empty room is disposed by Colyseus. This is pre-match behavior only. The [playable extension](versus-gameplay.md) now implements timed matches, clear ordering, duplicate handling, pauses and recovery. Automatic rematches remain later work; the [solo preview](solo-play.md) now reuses this room lifecycle with one seat. Phone touch acceptance remains #3.
 

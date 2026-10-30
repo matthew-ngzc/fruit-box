@@ -67,6 +67,14 @@ jobs:
         run: test -z "$(docker compose ps --status running --quiet)"
       - run: docker compose up --detach --wait --wait-timeout 60
       - run: node scripts/check_container.mjs
+      - name: Stop LAN profile before checking the hosting profile
+        run: docker compose stop
+      - run: docker compose -f compose.host.yaml config --quiet
+      - run: docker compose -f compose.host.yaml up --build --detach --wait --wait-timeout 180
+      - run: node scripts/check_container.mjs
+      - name: Clean up hosting profile
+        if: ${{ always() }}
+        run: docker compose -f compose.host.yaml down
       - name: Clean up local test containers
         if: ${{ always() }}
         run: docker compose down

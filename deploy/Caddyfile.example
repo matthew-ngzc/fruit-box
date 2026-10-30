@@ -1,0 +1,17 @@
+# Template for Caddy and cloudflared running on the SAME HOST as the game.
+# Replace fruitbox.example.com with your public game hostname.
+# Point that hostname's tunnel service to http://127.0.0.1:8080.
+# Protect the entire public hostname with a Cloudflare Access allow policy.
+http://fruitbox.example.com:8080 {
+	bind 127.0.0.1
+	request_body {
+		max_size 4096
+	}
+	header {
+		-Server
+		X-Content-Type-Options nosniff
+		Referrer-Policy no-referrer
+		Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' wss://fruitbox.example.com; frame-ancestors 'none'; base-uri 'none'; form-action 'self'"
+	}
+	reverse_proxy 127.0.0.1:2567
+}

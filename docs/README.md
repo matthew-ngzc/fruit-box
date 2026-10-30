@@ -41,3 +41,5 @@ Research date: 29 October 2026 (Singapore time). The TypeScript/Colyseus browser
 [Same-room rematch decision](adr/0005-rematch-in-the-same-room.md): solo replay and both-player consent, round resets and lifecycle.
 
 [Interface wording](interface-copy.md): direct labels, factual status, named pauses and concise instructions.
+
+[Temporary friend hosting and security checks](temporary-hosting.md): loopback container profile, Caddy/tunnel boundary, resource budgets and host/CVE verification still required.
