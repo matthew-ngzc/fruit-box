@@ -2,7 +2,7 @@
 
 A personal Fruit Box project exploring solo play and real-time competition between friends on a shared board, accessible from iPhone and Android browsers.
 
-TypeScript, Node and Colyseus are accepted. The local browser implementation supports solo play and a timed two-player shared-board match with authoritative clears, scores, pauses and reconnection. See [playable versus setup](docs/versus-gameplay.md); physical-phone acceptance remains pending. For a visible start/stop control in Docker Desktop, use [local Docker setup](docs/local-docker.md). Hosting remains undecided.
+TypeScript, Node and Colyseus are accepted. The local browser implementation supports solo play and a timed two-player shared-board match with authoritative clears, scores, pauses and reconnection. See [playable versus setup](docs/versus-gameplay.md); physical-phone acceptance remains pending. For a visible start/stop control in Docker Desktop, use [local Docker setup](docs/local-docker.md). For the requested manual Mac/Pi4 tunnel route, use [temporary hosting and security checks](docs/temporary-hosting.md); actual host clearance and automatic deployment remain pending.
 
 ## Continue with an agent
 
@@ -25,7 +25,7 @@ python3 scripts/check_agent_setup.py
 python3 -m unittest discover -s tests -p 'test_*.py'
 ```
 
-On Windows, `python` may be the executable name. Use Node 22.12+ and run `npm ci`, `npm test`, `npm run typecheck`, `npm run build` and `npm run demo` for the room server. Credentials and private infrastructure access are configured on each machine, not stored in this public repository. Imported skill licensing is documented in [the skill notice](.agents/skills/NOTICE.md).
+On Windows, `python` may be the executable name. Use a patched Node 22.23.4+, 24.22.1+ or 26.12.1+ within those release lines and run `npm ci`, `npm test`, `npm run typecheck`, `npm run build` and `npm run demo` for the room server. Credentials and private infrastructure access are configured on each machine, not stored in this public repository. Imported skill licensing is documented in [the skill notice](.agents/skills/NOTICE.md).
 
 
 [Playable versus setup](docs/versus-gameplay.md) · [Upstream licensing](docs/licensing.md)

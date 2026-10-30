@@ -1,0 +1,17 @@
+name: fruit-box-host
+services:
+  game:
+    build: .
+    ports:
+      - "127.0.0.1:${FRUIT_BOX_PORT:-2567}:2567"
+    environment:
+      NODE_OPTIONS: --max-old-space-size=128
+    init: true
+    restart: "no"
+    stop_grace_period: 10s
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 256m
+    cpus: 1.0
+    pids_limit: 128

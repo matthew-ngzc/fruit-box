@@ -8,6 +8,7 @@ Start from [the documentation index](README.md) and name the contract being chan
 | User-facing wording and status labels | [Interface wording](interface-copy.md) |
 | Mobile selection, landscape and fullscreen | [Mobile interaction](mobile-interaction.md) |
 | Local Docker lifecycle and visibility | [Local Docker](local-docker.md) |
+| Temporary tunnel/Caddy hosting and patch verification | [Temporary hosting](temporary-hosting.md) |
 | Playable match rules and recovery | [Versus gameplay](versus-gameplay.md) |
 | Upstream reuse and license notices | [Licensing](licensing.md) |
 | Private-room implementation, runtime setup and public state | [Versus rooms](versus-rooms.md) |
