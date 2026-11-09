@@ -11,8 +11,12 @@
 - Issue or agreed plan:
 - Work assigned to this PR:
 - Base branch and dependencies:
+- Stack parent / children (PR links, or none):
+- Merge order and restacking owner:
 - Independently mergeable:
 - Deferred work or next PR:
+
+<!-- Follow docs/development-workflow.md#stacked-pr-delivery. Target the immediate prerequisite branch; keep the diff scoped to this slice. A stacked PR can be ready for review before its parent merges. -->
 
 ## Decisions and trade-offs
 

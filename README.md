@@ -16,6 +16,7 @@ Use [GitHub Issues](https://github.com/matthew-ngzc/fruit-box/issues) for agreed
 - [Confirmed rules and open decisions](docs/design-session.md)
 - [Domain glossary](CONTEXT.md)
 - [Architecture decision register](docs/adr/README.md)
+- [CI/CD pipeline and deployment readiness](docs/ci-cd.md)
 
 The portable documentation/agent-setup checks use Python 3's standard library:
 

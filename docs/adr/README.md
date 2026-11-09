@@ -24,6 +24,7 @@ Store an ADR's pictures, exported diagrams, and recordings in `../assets/adr-NNN
 | ID | Decision | Status | Decision date | Media | Context / delivery |
 | --- | --- | --- | --- | --- | --- |
 | 0001 | [Order contested clears at the room server](0001-order-contested-clears-at-the-room-server.md) | Accepted | 2026-10-29 | [adr-0001](../assets/adr-0001/) | [Confirmed rules](../design-session.md), [foundation PR 5](https://github.com/matthew-ngzc/fruit-box/pull/5) |
+| 0002 | [Deploy reviewed main changes after successful CI](0002-deploy-main-after-successful-ci.md) | Accepted | 2026-10-29 | [adr-0002](../assets/adr-0002/) | [CI/CD](../ci-cd.md), [issue 6](https://github.com/matthew-ngzc/fruit-box/issues/6), [delivery follow-up](https://github.com/matthew-ngzc/fruit-box/issues/7) |
 
 Backend/framework selection and the initial hosting route remain open in [issue 2](https://github.com/matthew-ngzc/fruit-box/issues/2) and [issue 4](https://github.com/matthew-ngzc/fruit-box/issues/4). Research recommendations are not accepted ADRs.
 

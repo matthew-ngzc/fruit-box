@@ -36,6 +36,47 @@ Review against the originating issue and repository instructions, fix actionable
 
 Use `gh` structured options and body files; attach created PRs to the Codex chat. GitHub remains the authoritative record of ticket and PR status. Local documents hold durable rules, decisions, and evidence rather than a duplicated status board.
 
+### Stacked PR delivery
+
+Plan a delivery map before starting a multi-PR issue: give each PR its assigned slice, immediate prerequisite, base branch, independent mergeability, required evidence, and ready-for-review gate. Keep the live dependency map in GitHub PR descriptions rather than duplicating project status in local docs.
+
+Start independent work from the current `main`. For work that needs an unmerged PR, branch from that prerequisite's head and target its branch with `gh pr create --base <parent-branch>`. Each child diff must contain only its assigned changes relative to that parent. Siblings sharing a parent can proceed independently; create a deeper chain only when a slice actually needs another slice's changes.
+
+Once a PR is ready for review, continue the next agreed slice without waiting for review or merge when its requirements are settled. An unmerged code dependency is handled by stacking; an unresolved product decision, missing access, or required evidence can still block the dependent work. Readiness and continuation do not authorize merging.
+
+Every stacked PR must identify:
+
+- Its parent and any known children, using PR links; label children `stacked`.
+- Its base branch and the parent head SHA used as the branch point. Update this SHA when restacking changes the incorporated parent revision.
+- The ancestor-first merge order, independent mergeability, and agent/person responsible for restacking. If nobody else is assigned, the agent continuing the child owns it.
+- Its own evidence and remaining blockers. A complete child may be ready for review while its parent remains open.
+
+Keep parent descriptions linked to their children. Preserve prerequisite branches until all dependent PRs have moved off them. Review each PR against its declared parent; when the user requests merging a child, check the full dependency chain and report any prerequisite that still needs approval. Merge a child into `main` after its prerequisites land and its integration checks pass; merging it into its temporary parent would collapse the delivery boundary.
+
+```mermaid
+flowchart TD
+    Main[main] --> A[PR A targets main]
+    A --> B[PR B targets branch A]
+    A --> C[PR C targets branch A]
+    B --> D[PR D targets branch B]
+    A --> Land[User authorizes merge of A]
+    Land --> Restack[Restack B and C onto main]
+    Restack --> Check[Refresh diffs, links and CI]
+    Check --> Ready[B and C independently ready to merge]
+```
+
+Arrows show dependency order. D still targets B until B lands; B and C do not depend on each other.
+
+#### Restack after a parent changes or merges
+
+1. Inspect the current remote heads, open PR bases, worktrees, and merge result with `git` and `gh`. Record the old parent SHA and child head before any rewrite; keep local work safe and coordinate with any agent using the child branch. Restacking is agent-driven with Git/gh; no automatic restacking service is configured.
+2. If the parent changes while open, incorporate its reviewed head into each direct child and recheck the child's diff. Rebase only child-owned commits onto the new parent, or merge the parent into the child when preserving shared history is needed. Propagate changed parent heads down deeper stacks.
+3. After the parent merges, fetch `main` and retarget direct children with `gh pr edit <child-number> --base main`. If the child's parent commits are already ancestors of `main`, a base change may suffice. After squash/rebase merges, replay only the child's commits onto `main` using the recorded old parent tip as the boundary; a base edit alone can leave prerequisite changes in the diff. Inspect that boundary before choosing a rebase command, especially when the child contains merge commits. Retargeting and rewriting may be ordered to suit GitHub's current base, but verify the final state before handing off.
+4. Before publishing rewritten history, verify that the remote child head still matches the recorded value. For a branch owned by this work, use an explicit expected-SHA `--force-with-lease` when a non-fast-forward push is needed; stop and reconcile unexpected remote changes. Coordinate shared branches before rewriting. Preserve parent branches until no open child uses them.
+5. Check the new base/head diff contains all and only the child's assigned work. Resolve conflicts, run applicable checks against the updated integration, and wait for fresh PR CI. If a base-only edit produces no run, arrange a fresh check of the updated PR integration and record its base/head revisions; an earlier green result does not cover that change. Update commit walkthrough links, parent revision, stack map, and mergeability claims; remove `stacked` when no unmerged prerequisite remains. Then repeat for affected descendants.
+
+An earlier green run is evidence for the earlier revision. Retargeting/restacking requires checking the resulting integration again; follow [CI/CD](ci-cd.md) for the actual checks. Continue to keep PRs open for human review until a user merge instruction applies.
+
 ### Detailed review contract
 
 Use the owner's Cooking Spree PRs as the style reference: [PR 6's behavior, trade-offs and evidence](https://github.com/matthew-ngzc/Cooking-Spree/pull/6), its [focused save-flow commit walkthrough](https://github.com/matthew-ngzc/Cooking-Spree/pull/6#issuecomment-5984709101), and [PR 3's maintained-diagram approach](https://github.com/matthew-ngzc/Cooking-Spree/pull/3). Adapt the presentation to Fruit Box; Android constraints and model-specific delegation policies are not this project's requirements.

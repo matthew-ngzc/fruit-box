@@ -12,7 +12,7 @@ The repository is the durable context. A desktop chat, a global skill installati
 ## Resume sequence
 
 1. Clone `https://github.com/matthew-ngzc/fruit-box.git`, enter the checkout, and read `AGENTS.md`.
-2. Run `git status` and `gh pr list`. If the planning bootstrap is still an open PR, inspect it with `gh pr view` and check out its branch with `gh pr checkout <number>` before expecting its documents and skills on main. After merge, a normal clone of main includes the setup.
+2. Run `git status` and `gh pr list`. Inspect the selected PR's base and parent/child links before checking out its branch with `gh pr checkout <number>`; read the [stacked delivery procedure](../development-workflow.md#stacked-pr-delivery) before continuing or restacking dependent work. If the planning bootstrap is still open, its documents and skills may only exist on its branch or descendants. After merge, a normal clone of main includes the setup.
 3. Read `CONTEXT.md`, `docs/design-session.md`, and relevant ADRs. These distinguish accepted rules from proposed technology choices.
 4. Read `docs/agents/issue-tracker.md`. Use `gh issue list` and `gh issue view <number> --comments` to select the work and recover the latest discussion. The issue/PR record supplies context that may not be present in an old chat.
 5. Select relevant skills from `docs/agents/skills.md`. Use repository-relative paths; no global installation or Windows path is needed. Record missing tool capabilities explicitly and use documented fallbacks where available.

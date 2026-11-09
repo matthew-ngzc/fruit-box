@@ -14,11 +14,14 @@ Research date: 29 October 2026 (Singapore time). No application implementation h
 10. [ADR register](adr/README.md): decision status, rationale, ownership, and supersession.
 11. [Documentation maintenance](doc-maintenance.md): owning pages, canonical diagrams, and navigation.
 12. [ADR media](assets/README.md): pictures and recordings in per-ADR folders beside `adr/`.
+13. [CI/CD](ci-cd.md): real current checks, accepted automatic-delivery policy, and remaining deployment prerequisites.
 
 ## Visual routes
 
 - [Delivery and evidence loop](development-workflow.md#detailed-review-contract).
+- [Stacked PR dependencies and restacking](development-workflow.md#stacked-pr-delivery).
 - [ADR lifecycle](adr/README.md#when-and-how-to-record-a-decision).
 - [Proposed system components](research/architecture-and-modes.md#proposed-components); the stack is not accepted yet.
+- [CI gates and future deployment boundary](ci-cd.md#implemented-ci).
 
 [CONTEXT.md](../CONTEXT.md) contains the game's domain glossary. Source links in the reports point to the inspected upstream commit; no upstream application code is included in these deliverables.
