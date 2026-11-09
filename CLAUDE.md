@@ -1,0 +1,1 @@
+Read and follow [AGENTS.md](AGENTS.md), then [the resume guide](docs/agents/resume.md). This repository versions its relevant skills under `.agents/skills/`; the [skill catalog](docs/agents/skills.md) explains when to read them. Project instructions are maintained in AGENTS.md rather than duplicated here.
