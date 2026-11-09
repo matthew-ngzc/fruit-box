@@ -16,6 +16,8 @@ Research date: 29 October 2026 (Singapore time). No application implementation h
 12. [ADR media](assets/README.md): pictures and recordings in per-ADR folders beside `adr/`.
 13. [CI/CD](ci-cd.md): real current checks, accepted automatic-delivery policy, and remaining deployment prerequisites.
 
+13. [Agent verification workflows](research/agent-verification-workflows.md): Lauren Tan's pstack, Kem Tossoun's teaching, evidence limits, and a proposed small Fruit Box trial.
+
 ## Visual routes
 
 - [Delivery and evidence loop](development-workflow.md#detailed-review-contract).
