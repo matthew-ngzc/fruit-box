@@ -54,7 +54,7 @@ sequenceDiagram
 
 The running server registers both modes through one admission budget before generation: 32 live rooms, a four-room creation burst and one creation token replenished each second. Invalid nicknames do not consume a slot; disposal or failed creation releases capacity. Existing joins/reconnects do not spend creation tokens. Guests have a finite protocol message rate. Framework body parsing has byte, deadline and concurrent-read budgets; see [temporary hosting](temporary-hosting.md#application-limits-and-remaining-exposure) for the exact contract and deployment limits. Real HTTP/SDK regressions cover those boundaries alongside gameplay.
 
-Rooms are in memory in one process; shutdown loses them. Leaving releases a seat; an empty room is disposed by Colyseus. This is pre-match behavior only. The [playable extension](versus-gameplay.md) now implements timed matches, clear ordering, duplicate handling, pauses and recovery. Automatic rematches remain later work; the [solo preview](solo-play.md) now reuses this room lifecycle with one seat. Phone touch acceptance remains #3.
+Rooms are in memory in one process. An empty pre-match versus lobby keeps its invite valid for five minutes, even after an explicit leave. Leaving explicitly frees the seat. A dropped connection reserves the player's seat for up to five minutes and clears their readiness. A friend can join an open seat while the other player is away. A round starts once both players are connected and ready. Expired empty lobbies release their capacity. Active-match recovery follows the [match rules](versus-gameplay.md). [Issue 27](https://github.com/matthew-ngzc/fruit-box/issues/27).
 
 ## Verification
 

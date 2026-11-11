@@ -1,4 +1,4 @@
-import { Client, type Room } from '@colyseus/sdk';
+import { Client, ErrorCode, MatchMakeError, type Room } from '@colyseus/sdk';
 import type { RoomState } from '../src/state.js';
 import { inspectRectangle } from '../src/rules.js';
 
@@ -145,8 +145,12 @@ function render() {
   element('rematch-status').textContent = !allConnected ? `${opponentName} disconnected. Select New game to start another room.`
     : players.filter(([, player]) => player.ready).map(([, player]) => `${player.nickname}: ready.`).join(' ') || 'Both players must select Play again.';
   if (state.phase === 'waiting') {
-    element('cover-title').textContent = solo ? 'Solo' : players.length < 2 ? 'Waiting for player' : 'Ready to start';
-    element('cover-detail').textContent = solo ? 'Select Start to play.' : self?.ready ? `Waiting for ${opponentName} to start.` : players.length < 2 ? 'Share the room code or invite link.' : 'Both players must select Ready.';
+    const absentPlayer = players.find(([id, player]) => id !== room!.sessionId && !player.connected)?.[1];
+    element('cover-title').textContent = solo ? 'Solo' : allConnected ? 'Ready to start' : 'Waiting for player';
+    element('cover-detail').textContent = solo ? 'Select Start to play.'
+      : absentPlayer ? `Waiting for ${absentPlayer.nickname} to reconnect.`
+      : self?.ready ? `Waiting for ${opponentName} to start.`
+      : players.length < 2 ? 'Share the room code or invite link.' : 'Both players must select Ready.';
   } else if (state.phase === 'paused') {
     element('cover-title').textContent = state.players.get(state.pausedBy) ? `Paused by ${state.players.get(state.pausedBy)!.nickname}` : 'Paused';
     element('cover-detail').textContent = `Resumes in ${Math.ceil(state.pauseRemainingMs / 1000)}s. ${solo ? 'Select Resume to continue.' : self?.ready ? `Waiting for ${opponentName}.` : 'Both players must select Resume.'}`;
@@ -167,11 +171,17 @@ function attach(joined: Room<RoomState>) {
   history.replaceState(null, '', `?room=${encodeURIComponent(joined.roomId)}`);
   joined.onStateChange(render);
   joined.onMessage('result', (result: { ok: boolean; reason: string }) => { cancelSelection(); message(result.ok ? '' : result.reason); render(); });
-  joined.onDrop(() => { connected = false; cancelSelection(); message('Disconnected. Reconnecting… The timer is still running.'); render(); });
+  joined.onDrop(() => {
+    connected = false; cancelSelection();
+    message(joined.state?.phase === 'waiting' ? 'Disconnected. Reconnecting…' : 'Disconnected. Reconnecting… The timer is still running.');
+    render();
+  });
   joined.onReconnect(() => { connected = true; sessionStorage.setItem('rejoin', joined.reconnectionToken); message('Reconnected.'); render(); });
   joined.onLeave(() => {
     connected = false; cancelSelection();
-    if (joined.state?.phase === 'playing' || joined.state?.phase === 'paused') {
+    if (joined.name === 'versus' && joined.state?.phase === 'waiting') {
+      message('Disconnected. Reload to return to the lobby.');
+    } else if (joined.state?.phase === 'playing' || joined.state?.phase === 'paused') {
       message('Disconnected. Reload to rejoin before the round ends.');
     } else {
       sessionStorage.removeItem('rejoin'); message('Room closed. Start a new game.');
@@ -188,7 +198,11 @@ async function join(mode: 'solo' | 'versus') {
       ? await sdk.create<RoomState>('solo', { nickname: nickname.trim() || 'You' })
       : code.value.trim() ? await sdk.joinById<RoomState>(code.value.trim(), { nickname }) : await sdk.create<RoomState>('versus', { nickname });
     attach(joined);
-  } catch (error) { message(error instanceof Error ? error.message : 'Could not join room'); }
+  } catch (error) {
+    message(error instanceof MatchMakeError && error.code === ErrorCode.MATCHMAKE_INVALID_ROOM_ID
+      ? 'Room unavailable. The invite may have expired or the room may be full.'
+      : error instanceof Error ? error.message : 'Could not join room');
+  }
   finally { element<HTMLButtonElement>('join').disabled = element<HTMLButtonElement>('solo').disabled = false; }
 }
 element<HTMLFormElement>('join-form').addEventListener('submit', event => { event.preventDefault(); void join('versus'); });

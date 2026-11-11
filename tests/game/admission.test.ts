@@ -25,17 +25,19 @@ it('shares creation admission across solo, versus and joinOrCreate while allowin
 });
 
 it('releases the shared room capacity after disposal without charging invalid admission', async () => {
-  running = await startServer(0, '127.0.0.1', { rooms: { maxRooms: 1, creationBurst: 20 } });
+  running = await startServer(0, '127.0.0.1', { rooms: { maxRooms: 1, creationBurst: 20, lobbyGraceMs: 200 } });
   const sdk = new Client(running.url);
   await expect(sdk.create('solo', { nickname: '' })).rejects.toThrow('Nickname');
   const host = await sdk.create('versus', { nickname: 'Host' }); clients.push(host);
   await expect(sdk.create('solo', { nickname: 'Excess' })).rejects.toThrow('capacity');
   const friend = await sdk.joinById(host.roomId, { nickname: 'Friend' }); clients.push(friend);
   await Promise.all([host.leave(), friend.leave()]);
+  await expect(sdk.create('solo', { nickname: 'Still full' })).rejects.toThrow('capacity');
   await expect.poll(async () => {
     try { clients.push(await sdk.create('solo', { nickname: 'Replacement' })); return true; }
     catch { return false; }
   }).toBe(true);
+  await expect(sdk.joinById(host.roomId, { nickname: 'Too late' })).rejects.toThrow('not found');
 });
 
 it('disconnects a flooding guest while the other guest can still use the room', async () => {

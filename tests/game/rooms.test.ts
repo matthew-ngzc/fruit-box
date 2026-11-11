@@ -84,6 +84,39 @@ it('does not admit guests by public room-name matching', async () => {
   await expect(sdk.join('versus', { nickname: 'Uninvited' })).rejects.toThrow();
 });
 
+it('keeps a versus invite joinable after the host explicitly leaves the lobby', async () => {
+  const sdk = new Client(running.url);
+  const host = connect(await sdk.create<RoomState>('versus', { nickname: 'Host' }));
+  await host.leave();
+  const friend = connect(await sdk.joinById<RoomState>(host.roomId, { nickname: 'Friend' }));
+  await waitFor(friend, () => friend.state.players?.size === 1);
+  expect(friend.state.players.get(friend.sessionId)?.nickname).toBe('Friend');
+  expect(friend.state.phase).toBe('waiting');
+});
+
+it('lets a friend join while the host is away and restores the host seat on return', async () => {
+  const sdk = new Client(running.url);
+  const host = connect(await sdk.create<RoomState>('versus', { nickname: 'Host' }));
+  await waitFor(host, () => host.state.players?.size === 1);
+  host.send('ready');
+  await waitFor(host, () => host.state.players.get(host.sessionId)?.ready === true);
+  host.reconnection.enabled = false;
+  await host.leave(false);
+
+  const friend = connect(await sdk.joinById<RoomState>(host.roomId, { nickname: 'Friend' }));
+  await waitFor(friend, () => friend.state.players?.get(host.sessionId)?.connected === false);
+  friend.send('ready');
+  await waitFor(friend, () => friend.state.players.get(friend.sessionId)?.ready === true);
+  expect(friend.state.phase).toBe('waiting');
+
+  const returned = connect(await sdk.reconnect<RoomState>(host.reconnectionToken));
+  expect(returned.sessionId).toBe(host.sessionId);
+  await waitFor(returned, () => returned.state.players?.get(host.sessionId)?.connected === true);
+  expect(returned.state.players.get(host.sessionId)?.ready).toBe(false);
+  returned.send('ready');
+  await waitFor(friend, () => friend.state.phase === 'playing');
+});
+
 it('starts a one-seat solo round without another guest', async () => {
   const sdk = new Client(running.url);
   const solo = connect(await sdk.create<RoomState>('solo', { nickname: 'Solo' }));
