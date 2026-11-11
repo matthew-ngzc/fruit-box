@@ -2,6 +2,7 @@ import { Client, type Room } from '@colyseus/sdk';
 import type { RoomState } from '../src/state.js';
 import { inspectRectangle } from '../src/rules.js';
 import { SoloSession } from './solo-session.js';
+import { soloStats } from './solo-stats.js';
 
 const element = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const message = (text: string) => { element('message').textContent = text; };
@@ -122,6 +123,12 @@ function render() {
   const hidden = state.phase === 'paused' || state.phase === 'waiting';
   board.style.visibility = hidden ? 'hidden' : 'visible';
   element('cover').hidden = !hidden && state.phase !== 'finished';
+  const stats = element('solo-stats');
+  stats.hidden = !soloSession || (state.phase !== 'waiting' && state.phase !== 'finished');
+  if (!stats.hidden) {
+    const { best, time } = soloStats();
+    stats.textContent = `Solo best: ${best} · Time played: ${time}`;
+  }
   const solo = state.mode === 'solo';
   document.body.dataset.mode = solo ? 'solo' : 'versus';
   element('game').dataset.mode = solo ? 'solo' : 'versus';
