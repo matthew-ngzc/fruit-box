@@ -16,6 +16,8 @@ A tap/no-area gesture cancels rather than establishing a first corner. Only the 
 
 Landscape keeps the full 17-column, 10-row board beside compact time/score/controls, with dynamic viewport height, safe-area padding and a short-viewport adjustment. Portrait keeps a rotate hint. Solo and versus use the same board and selection rendering; solo shows one score and no invite controls.
 
+During an active round on a phone-sized screen, the game sits in a fixed shell sized to the dynamic viewport. The document cannot scroll underneath the board. If controls overflow a short viewport, players can scroll the shell from outside the board. The board captures its own drag gestures, and a visual viewport resize or scroll cancels an in-progress drag so a release cannot use stale coordinates. This works independently of native fullscreen. If Telegram moves its own browser surface during a drag, open the link in Safari from Telegram's browser menu. [Issue 28](https://github.com/matthew-ngzc/fruit-box/issues/28) tracks the remaining in-app browser verification.
+
 The owner reported fullscreen working on Android Brave. Ready/Start and the explicit Fullscreen button retain the gesture-based request and best-effort landscape lock from the earlier preview. Failure/unavailable APIs do not block play; manual landscape remains usable. The latest owner report reconfirms Android Brave game-start fullscreen, but says an earlier iPhone trial failed (browser/version unknown). The prior free-box/solo change did not introduce an iPhone fullscreen workaround. Current [WebKit tracking](https://bugs.webkit.org/show_bug.cgi?id=206854) still documents the iPhone page-fullscreen limitation; video fullscreen cannot display this interactive game. Capability detection disables an unsupported Fullscreen action and keeps visible rotate/landscape guidance, including in landscape. This is a fallback, not an iPhone native-fullscreen fix. A successful Android Brave report is not iPhone/Safari or all-version browser acceptance. Fullscreen, input cancellation and fallback behavior are documented in [gameplay](versus-gameplay.md) and the primary [Fullscreen API](https://developer.mozilla.org/en-US/docs/Web/API/Element/requestFullscreen) / [orientation API](https://developer.mozilla.org/en-US/docs/Web/API/ScreenOrientation/lock) references.
 
 ## Reference and feedback
@@ -27,6 +29,8 @@ The owner found the distant endpoint magnifier disorienting because it required 
 ## Verification
 
 Pure rule tests use known center coordinates to verify all four strict edges, a small rectangle containing a center and a zero-area box. Browser input checks validate continuous geometry, no forced start-cell inclusion, reverse drags, partial-fruit center inclusion, no two-tap/keyboard selection or zoom, actual clear/scoring, touch cancellation, solo display and versus synchronization. Actual revised phone review remains pending until the owner tries this version. No gesture recording is claimed where capture is unavailable.
+
+The Windows WebKit iPhone 15 profile reproduced document scrolling before the fixed shell. With fullscreen disabled, the updated game kept the board in view in [portrait](assets/mobile-stable-portrait.png) and [landscape](assets/mobile-stable-landscape.png), retained a pointer dragged beyond the board, cancelled the selection on a simulated visual viewport resize, and scored a valid reverse drag. These checks use mouse pointer input in the iPhone profile. Safari on iOS and Telegram host gestures still need device verification.
 
 ## Pause and room sharing
 

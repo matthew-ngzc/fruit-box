@@ -222,6 +222,13 @@ board.addEventListener('pointercancel', event => { if (event.pointerId === activ
 board.addEventListener('lostpointercapture', event => { if (dragging && event.pointerId === activePointer) { cancelSelection(); renderSelection(); } });
 document.addEventListener('keydown', event => { if (event.key === 'Escape') { cancelSelection(); renderSelection(); } });
 window.addEventListener('resize', () => { cancelSelection(); renderSelection(); updateViewControls(); });
+function cancelDragOnViewportChange() {
+  if (!dragging) return;
+  cancelSelection();
+  renderSelection();
+}
+window.visualViewport?.addEventListener('resize', cancelDragOnViewportChange);
+window.visualViewport?.addEventListener('scroll', cancelDragOnViewportChange);
 
 function updateViewControls() {
   const fullscreen = !!document.fullscreenElement;
@@ -229,17 +236,15 @@ function updateViewControls() {
   element('fullscreen').textContent = fullscreen ? 'Exit fullscreen' : available ? 'Fullscreen' : 'Fullscreen unavailable';
   element<HTMLButtonElement>('fullscreen').disabled = !available && !fullscreen;
   const hint = element('view-hint');
+  const portrait = matchMedia('(orientation: portrait)').matches;
   hint.classList.toggle('unsupported', !available);
-  hint.textContent = !available ? 'Fullscreen is not supported. Rotate your phone to play in landscape.'
-    : matchMedia('(max-width: 900px) and (orientation: portrait)').matches ? 'Rotate your phone for a larger board.' : '';
+  hint.textContent = !available && !portrait ? 'Playing in the browser window.'
+    : portrait && matchMedia('(max-width: 900px)').matches ? 'Rotate your phone for a larger board.' : '';
 }
 async function enterPlayView() {
   try {
     if (!document.fullscreenElement) {
-      if (!document.fullscreenEnabled || !document.documentElement.requestFullscreen) {
-        message('Fullscreen is not supported. Rotate your phone to play in landscape.');
-        return;
-      }
+      if (!document.fullscreenEnabled || !document.documentElement.requestFullscreen) return;
       await document.documentElement.requestFullscreen();
     }
     if (!matchMedia('(pointer: coarse), (max-width: 900px)').matches) return;
