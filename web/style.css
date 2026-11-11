@@ -94,3 +94,31 @@
   #game { grid-template-rows: 32px 78px minmax(0, 1fr) 68px; }
   #game[data-mode="solo"] { grid-template-rows: 32px 42px minmax(0, 1fr) 44px; }
 }
+
+@media (max-width: 900px), (orientation: landscape) and (max-height: 600px) {
+  html:has(#game[data-phase="playing"]),
+  body:has(#game[data-phase="playing"]) {
+    overflow: hidden;
+    overscroll-behavior: none;
+  }
+
+  body:has(#game[data-phase="playing"]) > main {
+    position: fixed;
+    inset: 0 0 auto;
+    height: 100dvh;
+    overflow: auto;
+    overscroll-behavior: none;
+  }
+
+  body:has(#game[data-phase="playing"]) header,
+  body:has(#game[data-phase="playing"]) footer {
+    display: none;
+  }
+}
+
+@media (max-width: 900px) and (orientation: portrait) {
+  body:has(#game[data-phase="playing"]) > main {
+    padding: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right))
+      max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+  }
+}
