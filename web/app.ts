@@ -15,6 +15,7 @@ let activePointer: number | undefined;
 let commandId = Number(sessionStorage.getItem('commandId') ?? 0);
 let connected = false;
 let phase = '';
+let clearTiming: { id: number; round: number; fruit: number[]; releasedAt: number; confirmed: boolean } | undefined;
 const cells: HTMLDivElement[] = [];
 const code = element<HTMLInputElement>('room-code');
 code.value = new URLSearchParams(location.search).get('room') ?? '';
@@ -26,6 +27,7 @@ function send(type: string, extra = {}) {
   commandId++;
   sessionStorage.setItem('commandId', String(commandId));
   room.send('command', { type, id: commandId, round: room.state.round, ...extra });
+  return commandId;
 }
 function cancelSelection() {
   dragging = false;
@@ -49,7 +51,7 @@ function inspectDrawnRectangle() {
   });
   return inspectRectangle(centers, bounds);
 }
-function submit() {
+function submit(releasedAt: number) {
   if (!room) return;
   const { fruit, sum } = inspectDrawnRectangle();
   if (sum !== 10) {
@@ -60,7 +62,10 @@ function submit() {
   // Every visual center in a regular grid forms a contiguous row/column range.
   // Empty outer rows/columns can be trimmed without changing the intended fruit.
   const rows = fruit.map(id => Math.floor(id / 17)), columns = fruit.map(id => id % 17);
-  send('clear', { top: Math.min(...rows), bottom: Math.max(...rows) + 1, left: Math.min(...columns), right: Math.max(...columns) + 1, fruit });
+  const id = send('clear', { top: Math.min(...rows), bottom: Math.max(...rows) + 1, left: Math.min(...columns), right: Math.max(...columns) + 1, fruit });
+  if (room.state.mode === 'versus' && id !== undefined) {
+    clearTiming = { id, round: room.state.round, fruit, releasedAt, confirmed: false };
+  }
   renderSelection();
 }
 function renderSelection() {
@@ -157,7 +162,68 @@ function render() {
     sessionStorage.removeItem('rejoin');
   }
   renderSelection();
+  recordVisibleClear(state);
 }
+
+function recordVisibleClear(state: RoomState) {
+  const timing = clearTiming;
+  if (!timing?.confirmed || timing.round !== state.round || !timing.fruit.every(id => state.board[id] === 0)) return;
+  clearTiming = undefined;
+  if (document.hidden) return;
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    if (document.hidden) return;
+    const name = 'fruit-box:visible-clear';
+    if (performance.getEntriesByName(name, 'measure').length >= 100) performance.clearMeasures(name);
+    performance.measure(name, { start: timing.releasedAt, end: performance.now() });
+  }));
+}
+
+function watchConnection(joined: Room<RoomState>) {
+  const indicator = element('connection');
+  const ping = element('ping');
+  indicator.hidden = joined.name !== 'versus';
+  if (indicator.hidden) return;
+  let stop = () => {};
+  function start() {
+    let active = true;
+    let waiting = false;
+    let lastReply = performance.now();
+    const samples: number[] = [];
+    const sample = () => {
+      if (!active) return;
+      if (performance.now() - lastReply >= 6000) {
+        ping.textContent = 'Ping unavailable';
+        delete indicator.dataset.level;
+      }
+      if (waiting) return;
+      waiting = true;
+      joined.ping(ms => {
+        if (!active) return;
+        waiting = false;
+        lastReply = performance.now();
+        samples.push(ms);
+        if (samples.length > 5) samples.shift();
+        const average = Math.round(samples.reduce((sum, value) => sum + value, 0) / samples.length);
+        ping.textContent = `${average} ms`;
+        indicator.dataset.level = average < 80 ? '3' : average < 160 ? '2' : '1';
+      });
+    };
+    ping.textContent = 'Checking ping…';
+    const interval = window.setInterval(sample, 2000);
+    stop = () => {
+      active = false;
+      window.clearInterval(interval);
+      delete indicator.dataset.level;
+    };
+    // The SDK acknowledges a rejoin after its onReconnect listeners return.
+    queueMicrotask(sample);
+  }
+  joined.onDrop(() => { stop(); ping.textContent = 'Reconnecting…'; });
+  joined.onReconnect(start);
+  joined.onLeave(() => { stop(); indicator.hidden = true; });
+  start();
+}
+
 function attach(joined: Room<RoomState>) {
   room = joined; connected = true;
   document.body.classList.add('has-game');
@@ -166,11 +232,17 @@ function attach(joined: Room<RoomState>) {
   element('room-id').textContent = joined.roomId;
   history.replaceState(null, '', `?room=${encodeURIComponent(joined.roomId)}`);
   joined.onStateChange(render);
-  joined.onMessage('result', (result: { ok: boolean; reason: string }) => { cancelSelection(); message(result.ok ? '' : result.reason); render(); });
-  joined.onDrop(() => { connected = false; cancelSelection(); message('Disconnected. Reconnecting… The timer is still running.'); render(); });
+  joined.onMessage('result', (result: { id: number; ok: boolean; reason: string }) => {
+    if (clearTiming?.id === result.id) {
+      if (result.ok) clearTiming.confirmed = true;
+      else clearTiming = undefined;
+    }
+    cancelSelection(); message(result.ok ? '' : result.reason); render();
+  });
+  joined.onDrop(() => { connected = false; clearTiming = undefined; cancelSelection(); message('Disconnected. Reconnecting… The timer is still running.'); render(); });
   joined.onReconnect(() => { connected = true; sessionStorage.setItem('rejoin', joined.reconnectionToken); message('Reconnected.'); render(); });
   joined.onLeave(() => {
-    connected = false; cancelSelection();
+    connected = false; clearTiming = undefined; cancelSelection();
     if (joined.state?.phase === 'playing' || joined.state?.phase === 'paused') {
       message('Disconnected. Reload to rejoin before the round ends.');
     } else {
@@ -178,6 +250,7 @@ function attach(joined: Room<RoomState>) {
     }
     render();
   });
+  watchConnection(joined);
   message(''); render();
 }
 async function join(mode: 'solo' | 'versus') {
@@ -216,7 +289,7 @@ board.addEventListener('pointerup', event => {
   if (board.hasPointerCapture(event.pointerId)) board.releasePointerCapture(event.pointerId);
   activePointer = undefined;
   if (Math.hypot(end.x - start.x, end.y - start.y) < 4) { cancelSelection(); renderSelection(); }
-  else submit();
+  else submit(event.timeStamp);
 });
 board.addEventListener('pointercancel', event => { if (event.pointerId === activePointer) { cancelSelection(); renderSelection(); } });
 board.addEventListener('lostpointercapture', event => { if (dragging && event.pointerId === activePointer) { cancelSelection(); renderSelection(); } });
