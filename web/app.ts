@@ -1,6 +1,7 @@
 import { Client, type Room } from '@colyseus/sdk';
 import type { RoomState } from '../src/state.js';
 import { inspectRectangle } from '../src/rules.js';
+import { SoloSession } from './solo-session.js';
 
 const element = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const message = (text: string) => { element('message').textContent = text; };
@@ -9,6 +10,8 @@ const board = element('board');
 const box = element('selection-box');
 const sumBadge = element('box-sum');
 let room: Room<RoomState> | undefined;
+let soloSession: SoloSession | undefined;
+const currentState = () => soloSession?.state ?? room?.state;
 type Point = { x: number; y: number };
 let start: Point | undefined, end: Point | undefined, dragging = false, pending = false;
 let activePointer: number | undefined;
@@ -22,8 +25,16 @@ code.addEventListener('input', updateJoin);
 function updateJoin() { element('join').textContent = code.value.trim() ? 'Join room' : 'Create room'; }
 updateJoin();
 function send(type: string, extra = {}) {
-  if (!room || !connected) return;
+  if (!connected) return;
   commandId++;
+  if (soloSession) {
+    const result = soloSession.command(type, commandId, extra);
+    cancelSelection();
+    message(result?.ok ? '' : result?.reason ?? '');
+    render();
+    return;
+  }
+  if (!room) return;
   sessionStorage.setItem('commandId', String(commandId));
   room.send('command', { type, id: commandId, round: room.state.round, ...extra });
 }
@@ -40,7 +51,7 @@ function rectangle() {
 }
 function inspectDrawnRectangle() {
   const bounds = rectangle();
-  const state = room?.state;
+  const state = currentState();
   if (!bounds || !state?.board) return { fruit: [], sum: 0 };
   const boardBounds = board.getBoundingClientRect();
   const centers = cells.map((cell, id) => {
@@ -50,7 +61,7 @@ function inspectDrawnRectangle() {
   return inspectRectangle(centers, bounds);
 }
 function submit() {
-  if (!room) return;
+  if (!currentState()) return;
   const { fruit, sum } = inspectDrawnRectangle();
   if (sum !== 10) {
     message(fruit.length ? `Total: ${sum}. Select 10.` : 'Select apples totaling 10.');
@@ -64,7 +75,7 @@ function submit() {
   renderSelection();
 }
 function renderSelection() {
-  const state = room?.state;
+  const state = currentState();
   if (!state?.board) return;
   const inspected = inspectDrawnRectangle();
   const ids = new Set(inspected.fruit);
@@ -95,12 +106,13 @@ function renderSelection() {
 }
 
 function render() {
-  const state = room?.state;
-  if (!state?.board) return;
+  const state = currentState();
+  const selfId = soloSession?.sessionId ?? room?.sessionId;
+  if (!state?.board || selfId === undefined) return;
   if (state.phase !== phase) {
     phase = state.phase; cancelSelection();
     message('');
-    if (phase === 'playing' && connected) sessionStorage.setItem('rejoin', room!.reconnectionToken);
+    if (phase === 'playing' && connected && room) sessionStorage.setItem('rejoin', room.reconnectionToken);
   }
   for (let id = 0; id < cells.length; id++) {
     const value = state.board[id];
@@ -119,16 +131,16 @@ function render() {
   element('room-invite').hidden = solo;
   element('new-room').textContent = 'New game';
   const players = [...state.players.entries()];
-  const opponentName = players.find(([id]) => id !== room!.sessionId)?.[1].nickname ?? 'the other player';
+  const opponentName = players.find(([id]) => id !== selfId)?.[1].nickname ?? 'the other player';
   element('scores').replaceChildren(...players.map(([id, player]) => {
     const div = document.createElement('div'); div.className = 'score';
-    const label = document.createElement('span'); label.textContent = player.nickname + (id === room!.sessionId && !solo ? ' (you)' : '');
-    const detail = document.createElement('small'); detail.textContent = `${player.connected ? 'Connected' : 'Disconnected'} · Pauses left: ${player.pauses}`;
+    const label = document.createElement('span'); label.textContent = player.nickname + (id === selfId && !solo ? ' (you)' : '');
+    const detail = document.createElement('small'); detail.textContent = `${soloSession ? '' : player.connected ? 'Connected · ' : 'Disconnected · '}Pauses left: ${player.pauses}`;
     label.append(detail); const score = document.createElement('b'); score.textContent = String(player.score); div.append(label, score); return div;
   }));
   const seconds = Math.ceil(state.remainingMs / 1000);
   element('time').textContent = `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
-  const self = state.players.get(room!.sessionId);
+  const self = state.players.get(selfId);
   element('ready').textContent = solo ? 'Start' : 'Ready';
   element('resume').textContent = self?.ready ? `Waiting for ${opponentName}…` : 'Resume';
   element<HTMLButtonElement>('ready').hidden = state.phase !== 'waiting';
@@ -159,10 +171,12 @@ function render() {
   renderSelection();
 }
 function attach(joined: Room<RoomState>) {
+  if (soloSession) {
+    void joined.leave();
+    return;
+  }
   room = joined; connected = true;
-  document.body.classList.add('has-game');
   sessionStorage.setItem('rejoin', joined.reconnectionToken);
-  element('lobby').hidden = true; element('game').hidden = false;
   element('room-id').textContent = joined.roomId;
   history.replaceState(null, '', `?room=${encodeURIComponent(joined.roomId)}`);
   joined.onStateChange(render);
@@ -178,15 +192,26 @@ function attach(joined: Room<RoomState>) {
     }
     render();
   });
+  showGame();
+}
+function showGame() {
+  document.body.classList.add('has-game');
+  element('lobby').hidden = true; element('game').hidden = false;
   message(''); render();
 }
 async function join(mode: 'solo' | 'versus') {
   element<HTMLButtonElement>('join').disabled = element<HTMLButtonElement>('solo').disabled = true;
   try {
     const nickname = element<HTMLInputElement>('nickname').value;
-    const joined = mode === 'solo'
-      ? await sdk.create<RoomState>('solo', { nickname: nickname.trim() || 'You' })
-      : code.value.trim() ? await sdk.joinById<RoomState>(code.value.trim(), { nickname }) : await sdk.create<RoomState>('versus', { nickname });
+    if (mode === 'solo') {
+      soloSession = new SoloSession(nickname.trim() || 'You', render);
+      connected = true;
+      sessionStorage.removeItem('rejoin');
+      history.replaceState(null, '', location.pathname);
+      showGame();
+      return;
+    }
+    const joined = code.value.trim() ? await sdk.joinById<RoomState>(code.value.trim(), { nickname }) : await sdk.create<RoomState>('versus', { nickname });
     attach(joined);
   } catch (error) { message(error instanceof Error ? error.message : 'Could not join room'); }
   finally { element<HTMLButtonElement>('join').disabled = element<HTMLButtonElement>('solo').disabled = false; }
@@ -201,7 +226,7 @@ function pointFromEvent(event: PointerEvent): Point {
   return { x: Math.max(0, Math.min(rect.width, event.clientX - rect.left)), y: Math.max(0, Math.min(rect.height, event.clientY - rect.top)) };
 }
 board.addEventListener('pointerdown', event => {
-  if (pending || activePointer !== undefined || !event.isPrimary || !connected || room?.state.phase !== 'playing' || event.button !== 0) return;
+  if (pending || activePointer !== undefined || !event.isPrimary || !connected || currentState()?.phase !== 'playing' || event.button !== 0) return;
   event.preventDefault();
   start = end = pointFromEvent(event); dragging = true; activePointer = event.pointerId;
   board.setPointerCapture(event.pointerId); renderSelection();
@@ -258,14 +283,16 @@ element('fullscreen').onclick = () => {
 document.addEventListener('fullscreenchange', () => { cancelSelection(); renderSelection(); updateViewControls(); });
 element('ready').onclick = () => {
   if (matchMedia('(pointer: coarse), (max-width: 900px)').matches) void enterPlayView();
-  room?.send('ready');
+  if (soloSession) soloSession.start();
+  else room?.send('ready');
 };
 updateViewControls();
 element('pause').onclick = () => send('pause');
 element('resume').onclick = () => send('resume');
 element('play-again').onclick = () => {
   if (matchMedia('(pointer: coarse), (max-width: 900px)').matches) void enterPlayView();
-  send('play-again');
+  if (soloSession) soloSession.start();
+  else send('play-again');
 };
 
 async function copyRoomText(kind: 'code' | 'link') {
@@ -295,6 +322,18 @@ element('share-close').onclick = () => { element('share-fallback').hidden = true
 
 element('new-room').onclick = async event => {
   event.preventDefault();
+  if (soloSession) {
+    soloSession.close();
+    soloSession = undefined;
+    connected = false;
+    phase = '';
+    cancelSelection();
+    document.body.classList.remove('has-game');
+    element('game').hidden = true; element('lobby').hidden = false;
+    document.title = 'Fruit Box · Solo & Versus';
+    message('');
+    return;
+  }
   await room?.leave();
   sessionStorage.removeItem('rejoin');
   location.href = '/';

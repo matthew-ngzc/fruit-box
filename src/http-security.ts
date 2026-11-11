@@ -1,4 +1,5 @@
 import { createRouter } from '@colyseus/core';
+import { soloResult } from './solo-result.js';
 
 export interface HttpLimits {
   maxBodyBytes: number;
@@ -16,7 +17,7 @@ export function createHttpRouter(options: Partial<HttpLimits> = {}) {
   let reading = 0;
   let tokens = limits.requestBurst;
   let refilledAt = performance.now();
-  return createRouter({}, { onRequest: async request => {
+  return createRouter({ soloResult }, { onRequest: async request => {
     const reject = (status: number, error: string) => Response.json({ error }, { status, headers: { connection: 'close' } });
     if (!['GET', 'HEAD', 'OPTIONS'].includes(request.method)) {
       const now = performance.now();
