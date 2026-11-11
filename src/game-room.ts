@@ -7,6 +7,8 @@ export class GameRoom extends Room<{ state: RoomState }> {
   maxClients = 2;
   maxMessagesPerSecond = 20;
   state = new RoomState();
+  protected lobbyGraceMs = 300000;
+  private emptyLobbyTimeout?: ReturnType<GameRoom['clock']['setTimeout']>;
   private match?: Match;
   private reconnections = new Map<string, ReturnType<GameRoom['allowReconnection']>>();
   private ended = false;
@@ -22,7 +24,7 @@ export class GameRoom extends Room<{ state: RoomState }> {
       if (this.match) return;
       const player = this.state.players.get(client.sessionId);
       if (player) player.ready = true;
-      if (this.state.players.size === this.maxClients && [...this.state.players.values()].every(player => player.ready)) {
+      if (this.state.players.size === this.maxClients && [...this.state.players.values()].every(player => player.connected && player.ready)) {
         this.startRound();
       }
       this.broadcastPatch();
@@ -55,10 +57,17 @@ export class GameRoom extends Room<{ state: RoomState }> {
 
   onJoin(client: Client) {
     this.state.players.set(client.sessionId, new Player({ nickname: client.auth }));
+    if (this.state.mode === 'versus' && !this.match) {
+      this.autoDispose = false;
+      this.cancelLobbyExpiry();
+    }
   }
 
   onLeave(client: Client) {
-    if (!this.match) this.state.players.delete(client.sessionId);
+    if (!this.match) {
+      this.state.players.delete(client.sessionId);
+      this.retainEmptyLobby();
+    }
     else {
       const player = this.state.players.get(client.sessionId);
       if (player) player.connected = false;
@@ -73,6 +82,16 @@ export class GameRoom extends Room<{ state: RoomState }> {
     // WITH_ERROR is also used when a reconnect races the old socket's close.
     // Close that socket before waiting, so reconnect cannot strand the old reference.
     if (code === CloseCode.WITH_ERROR) client.leave(CloseCode.WITH_ERROR);
+    if (!this.match && this.state.mode === 'versus' && code !== CloseCode.WITH_ERROR) {
+      const player = this.state.players.get(client.sessionId);
+      if (!player) return;
+      player.connected = false;
+      player.ready = false;
+      this.retainEmptyLobby();
+      try { await this.allowReconnection(client, this.lobbyGraceMs / 1000); }
+      catch { /* The seat expired. The leave handler removes the player. */ }
+      return;
+    }
     if (!this.match || this.match.phase === 'finished') return;
     this.state.players.get(client.sessionId)!.connected = false;
     const pending = this.allowReconnection(client, 'manual');
@@ -83,6 +102,17 @@ export class GameRoom extends Room<{ state: RoomState }> {
 
   onReconnect(client: Client) {
     this.state.players.get(client.sessionId)!.connected = true;
+    this.cancelLobbyExpiry();
+  }
+
+  private retainEmptyLobby() {
+    if (this.state.mode !== 'versus' || this.clients.length || this.emptyLobbyTimeout) return;
+    this.emptyLobbyTimeout = this.clock.setTimeout(() => { void this.disconnect(); }, this.lobbyGraceMs);
+  }
+
+  private cancelLobbyExpiry() {
+    this.emptyLobbyTimeout?.clear();
+    this.emptyLobbyTimeout = undefined;
   }
 
   private startRound() {
@@ -127,18 +157,20 @@ export interface RoomLimits {
   maxRooms: number;
   creationBurst: number;
   creationRefillMs: number;
+  lobbyGraceMs: number;
 }
 
 // One budget per running server, shared by both modes and every matchmaking alias.
 // Never derive this budget from a client option or a forwarded IP header.
 export function createRoomTypes(overrides: Partial<RoomLimits> = {}) {
-  const limits = { maxRooms: 32, creationBurst: 4, creationRefillMs: 1000, ...overrides };
+  const limits = { maxRooms: 32, creationBurst: 4, creationRefillMs: 1000, lobbyGraceMs: 300000, ...overrides };
   for (const value of Object.values(limits)) {
     if (!Number.isSafeInteger(value) || value < 1) throw new Error('Room limits must be positive safe integers');
   }
   const active = new Set<GameRoom>();
   let tokens = limits.creationBurst, updatedAt = performance.now();
   class AdmittedRoom extends GameRoom {
+    protected override lobbyGraceMs = limits.lobbyGraceMs;
     override async onCreate(options: unknown) {
       nicknameFrom(options);
       if (active.size >= limits.maxRooms) throw new ServerError(503, 'Room capacity reached; try again later');

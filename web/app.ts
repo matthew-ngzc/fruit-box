@@ -1,6 +1,7 @@
-import { Client, type Room } from '@colyseus/sdk';
+import { Client, ErrorCode, MatchMakeError, type Room } from '@colyseus/sdk';
 import type { RoomState } from '../src/state.js';
 import { inspectRectangle } from '../src/rules.js';
+import { forgetRejoin, loadRejoin, saveRejoin } from './room-rejoin.js';
 
 const element = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const message = (text: string) => { element('message').textContent = text; };
@@ -25,7 +26,17 @@ function send(type: string, extra = {}) {
   if (!room || !connected) return;
   commandId++;
   sessionStorage.setItem('commandId', String(commandId));
+  rememberRoom(room);
   room.send('command', { type, id: commandId, round: room.state.round, ...extra });
+}
+function rememberRoom(joined: Room<RoomState>) {
+  if (joined.state?.phase === 'finished') return;
+  sessionStorage.setItem('rejoin', joined.reconnectionToken);
+  if (joined.name === 'versus') saveRejoin(joined.roomId, joined.reconnectionToken, commandId);
+}
+function forgetRoom(joined: Room<RoomState>) {
+  sessionStorage.removeItem('rejoin');
+  forgetRejoin(joined.roomId, joined.reconnectionToken);
 }
 function cancelSelection() {
   dragging = false;
@@ -100,7 +111,8 @@ function render() {
   if (state.phase !== phase) {
     phase = state.phase; cancelSelection();
     message('');
-    if (phase === 'playing' && connected) sessionStorage.setItem('rejoin', room!.reconnectionToken);
+    if (phase === 'playing' && connected) rememberRoom(room!);
+    if (phase === 'finished') forgetRoom(room!);
   }
   for (let id = 0; id < cells.length; id++) {
     const value = state.board[id];
@@ -145,8 +157,12 @@ function render() {
   element('rematch-status').textContent = !allConnected ? `${opponentName} disconnected. Select New game to start another room.`
     : players.filter(([, player]) => player.ready).map(([, player]) => `${player.nickname}: ready.`).join(' ') || 'Both players must select Play again.';
   if (state.phase === 'waiting') {
-    element('cover-title').textContent = solo ? 'Solo' : players.length < 2 ? 'Waiting for player' : 'Ready to start';
-    element('cover-detail').textContent = solo ? 'Select Start to play.' : self?.ready ? `Waiting for ${opponentName} to start.` : players.length < 2 ? 'Share the room code or invite link.' : 'Both players must select Ready.';
+    const absentPlayer = players.find(([id, player]) => id !== room!.sessionId && !player.connected)?.[1];
+    element('cover-title').textContent = solo ? 'Solo' : allConnected ? 'Ready to start' : 'Waiting for player';
+    element('cover-detail').textContent = solo ? 'Select Start to play.'
+      : absentPlayer ? `Waiting for ${absentPlayer.nickname} to reconnect.`
+      : self?.ready ? `Waiting for ${opponentName} to start.`
+      : players.length < 2 ? 'Share the room code or invite link.' : 'Both players must select Ready.';
   } else if (state.phase === 'paused') {
     element('cover-title').textContent = state.players.get(state.pausedBy) ? `Paused by ${state.players.get(state.pausedBy)!.nickname}` : 'Paused';
     element('cover-detail').textContent = `Resumes in ${Math.ceil(state.pauseRemainingMs / 1000)}s. ${solo ? 'Select Resume to continue.' : self?.ready ? `Waiting for ${opponentName}.` : 'Both players must select Resume.'}`;
@@ -154,27 +170,37 @@ function render() {
     const scores = players.map(([, player]) => player.score);
     element('cover-title').textContent = solo ? 'Game over' : scores[0] === scores[1] ? 'Draw' : `${players[scores[0] > scores[1] ? 0 : 1][1].nickname} wins`;
     element('cover-detail').textContent = solo ? `Score: ${scores[0]}` : players.map(([, player]) => `${player.nickname}: ${player.score}`).join(' · ');
-    sessionStorage.removeItem('rejoin');
   }
   renderSelection();
 }
 function attach(joined: Room<RoomState>) {
   room = joined; connected = true;
   document.body.classList.add('has-game');
-  sessionStorage.setItem('rejoin', joined.reconnectionToken);
+  rememberRoom(joined);
   element('lobby').hidden = true; element('game').hidden = false;
   element('room-id').textContent = joined.roomId;
   history.replaceState(null, '', `?room=${encodeURIComponent(joined.roomId)}`);
   joined.onStateChange(render);
   joined.onMessage('result', (result: { ok: boolean; reason: string }) => { cancelSelection(); message(result.ok ? '' : result.reason); render(); });
-  joined.onDrop(() => { connected = false; cancelSelection(); message('Disconnected. Reconnecting… The timer is still running.'); render(); });
-  joined.onReconnect(() => { connected = true; sessionStorage.setItem('rejoin', joined.reconnectionToken); message('Reconnected.'); render(); });
+  joined.onDrop(() => {
+    connected = false; cancelSelection();
+    message(joined.state?.phase === 'waiting' ? 'Disconnected. Reconnecting…' : 'Disconnected. Reconnecting… The timer is still running.');
+    render();
+  });
+  joined.onReconnect(() => {
+    connected = true;
+    // The SDK replaces the token after its reconnect listeners return.
+    queueMicrotask(() => { if (room === joined && connected) rememberRoom(joined); });
+    message('Reconnected.'); render();
+  });
   joined.onLeave(() => {
     connected = false; cancelSelection();
-    if (joined.state?.phase === 'playing' || joined.state?.phase === 'paused') {
+    if (joined.name === 'versus' && joined.state?.phase === 'waiting') {
+      message('Disconnected. Reload to return to the lobby.');
+    } else if (joined.state?.phase === 'playing' || joined.state?.phase === 'paused') {
       message('Disconnected. Reload to rejoin before the round ends.');
     } else {
-      sessionStorage.removeItem('rejoin'); message('Room closed. Start a new game.');
+      forgetRoom(joined); message('Room closed. Start a new game.');
     }
     render();
   });
@@ -188,7 +214,11 @@ async function join(mode: 'solo' | 'versus') {
       ? await sdk.create<RoomState>('solo', { nickname: nickname.trim() || 'You' })
       : code.value.trim() ? await sdk.joinById<RoomState>(code.value.trim(), { nickname }) : await sdk.create<RoomState>('versus', { nickname });
     attach(joined);
-  } catch (error) { message(error instanceof Error ? error.message : 'Could not join room'); }
+  } catch (error) {
+    message(error instanceof MatchMakeError && error.code === ErrorCode.MATCHMAKE_INVALID_ROOM_ID
+      ? 'Room unavailable. The invite may have expired or the room may be full.'
+      : error instanceof Error ? error.message : 'Could not join room');
+  }
   finally { element<HTMLButtonElement>('join').disabled = element<HTMLButtonElement>('solo').disabled = false; }
 }
 element<HTMLFormElement>('join-form').addEventListener('submit', event => { event.preventDefault(); void join('versus'); });
@@ -295,13 +325,40 @@ element('share-close').onclick = () => { element('share-fallback').hidden = true
 
 element('new-room').onclick = async event => {
   event.preventDefault();
+  if (room) forgetRoom(room);
   await room?.leave();
-  sessionStorage.removeItem('rejoin');
   location.href = '/';
 };
-const token = sessionStorage.getItem('rejoin');
-const invitedRoom = new URLSearchParams(location.search).get('room');
-if (token && (!invitedRoom || token.split(':')[0] === invitedRoom)) {
+window.addEventListener('pagehide', () => { if (room && connected) rememberRoom(room); });
+
+async function rejoin(token: string) {
+  const joinButton = element<HTMLButtonElement>('join');
+  const soloButton = element<HTMLButtonElement>('solo');
+  joinButton.disabled = soloButton.disabled = true;
   message('Reconnecting…');
-  sdk.reconnect<RoomState>(token).then(attach).catch(() => { sessionStorage.removeItem('rejoin'); message('Room unavailable. Create or join a room.'); });
+  try {
+    for (const delay of [0, 250, 750, 1500]) {
+      if (delay) await new Promise(resolve => setTimeout(resolve, delay));
+      try {
+        attach(await sdk.reconnect<RoomState>(token));
+        return;
+      } catch (error) {
+        if (error instanceof MatchMakeError && error.code === ErrorCode.MATCHMAKE_INVALID_ROOM_ID) {
+          forgetRejoin(token.split(':')[0], token);
+          break;
+        }
+      }
+    }
+    sessionStorage.removeItem('rejoin');
+    message('Could not rejoin. Try the invite again or join as a new player.');
+  } finally { joinButton.disabled = soloButton.disabled = false; }
+}
+
+const tabToken = sessionStorage.getItem('rejoin');
+const invitedRoom = new URLSearchParams(location.search).get('room');
+const savedRejoin = invitedRoom ? loadRejoin(invitedRoom) : undefined;
+const token = tabToken && (!invitedRoom || tabToken.split(':')[0] === invitedRoom) ? tabToken : savedRejoin?.token;
+if (token) {
+  if (savedRejoin?.token === token) commandId = Math.max(commandId, savedRejoin.commandId);
+  void rejoin(token);
 }
