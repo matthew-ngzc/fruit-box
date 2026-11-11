@@ -12,7 +12,7 @@ The page shows one score and no room or invite controls. **Play again** starts a
 
 When an attempt finishes, the browser queues its attempt ID, starting seed and ordered clear rectangles. It retries after a failed upload and when the browser comes online. The outbox uses browser storage across reloads when available.
 
-The server bounds the request using the existing HTTP limits, regenerates the starting board and applies the shared clear rules. A valid replay returns the derived score and attempt ID. Repeating the same submission returns the same receipt. The server validates the move sequence for casual play and keeps no result record. Personal history belongs to [issue 31](https://github.com/matthew-ngzc/fruit-box/issues/31).
+The server bounds the request using the existing HTTP limits, regenerates the starting board and applies the shared clear rules. A valid replay returns the derived score and attempt ID. Repeating the same submission returns the same receipt. The server validates the move sequence for casual play and keeps no result record.
 
 ```mermaid
 flowchart LR
@@ -26,6 +26,10 @@ flowchart LR
 ```
 
 The hosted browser uses this local flow. The existing one-seat Colyseus endpoint stays available to older clients. Live versus still uses the [authoritative room](versus-gameplay.md).
+
+## Personal stats
+
+Solo shows your best completed score and cumulative active time before and after a round. Time includes abandoned attempts and excludes lobby and pause time. The browser saves progress at one-second intervals and when leaving or closing an attempt. Stats belong to this browser. Uploading a result has no effect on the local totals. [Issue 31](https://github.com/matthew-ngzc/fruit-box/issues/31).
 
 ## Verification
 

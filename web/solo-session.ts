@@ -2,6 +2,7 @@ import { Match } from '../src/match.js';
 import { createCertifiedBoard, type Selection } from '../src/rules.js';
 import type { SoloResult } from '../src/solo-result.js';
 import { Player, RoomState } from '../src/state.js';
+import { recordSoloStats } from './solo-stats.js';
 
 const resultPrefix = 'fruit-box:solo-result:';
 const outbox = new Map<string, SoloResult>();
@@ -47,12 +48,18 @@ export class SoloSession {
   private seed = 0;
   private moves: Selection[] = [];
   private attemptId = '';
+  private recordedSecond = -1;
   private readonly timer: number;
+  private readonly checkpointOnExit = () => {
+    this.match?.tick(performance.now());
+    this.checkpoint(true);
+  };
 
   constructor(nickname: string, private readonly render: () => void) {
     this.state.mode = 'solo';
     this.state.players.set(this.sessionId, new Player({ nickname }));
     this.prepareBoard();
+    window.addEventListener('pagehide', this.checkpointOnExit);
     this.timer = window.setInterval(() => {
       if (!this.match || this.match.phase === 'finished') return;
       this.match.tick(performance.now());
@@ -65,6 +72,7 @@ export class SoloSession {
     this.state.board.splice(0, this.state.board.length, ...createCertifiedBoard(this.seed).board.map(fruit => fruit.value));
     this.attemptId = Array.from(crypto.getRandomValues(new Uint8Array(16)), byte => byte.toString(16).padStart(2, '0')).join('');
     this.moves = [];
+    this.recordedSecond = -1;
   }
 
   start() {
@@ -89,7 +97,20 @@ export class SoloSession {
   }
 
   close() {
+    this.checkpointOnExit();
+    window.removeEventListener('pagehide', this.checkpointOnExit);
     window.clearInterval(this.timer);
+  }
+
+  private checkpoint(force: boolean) {
+    const match = this.match;
+    if (!match) return;
+    const activeMs = 120000 - match.remainingMs;
+    const second = Math.floor(activeMs / 1000);
+    if (force || second !== this.recordedSecond) {
+      this.recordedSecond = second;
+      recordSoloStats(this.attemptId, activeMs, match.phase === 'finished' ? match.players[this.sessionId].score : undefined);
+    }
   }
 
   private sync() {
@@ -105,6 +126,7 @@ export class SoloSession {
     player.pauses = local.pauses;
     player.ready = local.ready;
     match.board.forEach((value, index) => { this.state.board[index] = value; });
+    this.checkpoint(finished);
     this.render();
     if (finished) {
       const key = resultPrefix + this.attemptId;
