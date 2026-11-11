@@ -56,6 +56,8 @@ The running server registers both modes through one admission budget before gene
 
 Rooms are in memory in one process. An empty pre-match versus lobby keeps its invite valid for five minutes, even after an explicit leave. Leaving explicitly frees the seat. A dropped connection reserves the player's seat for up to five minutes and clears their readiness. A friend can join an open seat while the other player is away. A round starts once both players are connected and ready. Expired empty lobbies release their capacity. Active-match recovery follows the [match rules](versus-gameplay.md). [Issue 27](https://github.com/matthew-ngzc/fruit-box/issues/27).
 
+To return after closing the browser, open the same invite in the same browser profile. The browser saves the room's rejoin token and command counter in local storage. The shareable link contains only the room ID. Reopening the invite briefly retries while the old socket closes. Explicitly choosing **New game** or reaching the end of a match clears the saved credential. The server decides whether the seat is still reserved.
+
 ## Verification
 
 The owner agreed to two public test interfaces: direct rules calls and real SDK clients against a listening server. Tests check certificate replay, clear validity/count/immutability, shared snapshots, duplicate-name identities, malformed nicknames, seat limits/replacement, private matching, client-option resistance and room isolation. They do not access private room internals or mock transport. The console demo is reproducible transport evidence; screenshots and phone recordings are not applicable to this server-only slice.
