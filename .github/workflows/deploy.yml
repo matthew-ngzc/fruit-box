@@ -1,0 +1,155 @@
+name: Deploy
+
+on:
+  push:
+    branches: ['**']
+  workflow_dispatch:
+    # GitHub only exposes this dispatch once this workflow exists on the
+    # default branch. Bootstrap by pushing it once; this is not a workaround
+    # that pretends a branch-local workflow can be manually dispatched.
+    inputs:
+      dev_branch:
+        description: Branch selected for the dev deployment (must match the ref picker)
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    name: Required checks for exact ref
+    # Pushes are intentionally filtered here rather than in on.push: GitHub
+    # cannot filter a push by the current repository variable. The dispatch
+    # ref picker and input must identify the same non-main branch for dev.
+    if: >-
+      ${{
+        (github.event_name == 'push' &&
+          (github.ref_name == 'main' || github.ref_name == vars.DEV_BRANCH)) ||
+        (github.event_name == 'workflow_dispatch' &&
+          inputs.dev_branch != '' && inputs.dev_branch != 'main' &&
+          github.ref_name == inputs.dev_branch &&
+          inputs.dev_branch == vars.DEV_BRANCH)
+      }}
+    uses: ./.github/workflows/ci.yml
+    permissions:
+      contents: read
+
+  publish:
+    name: Publish image
+    needs: checks
+    runs-on: ubuntu-24.04-arm
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      digest: ${{ steps.build.outputs.digest }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
+      - name: Log in to GHCR
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build and publish content-addressed image
+        id: build
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
+        with:
+          context: .
+          platforms: linux/arm64
+          push: true
+          tags: ghcr.io/${{ github.repository }}:commit-${{ github.sha }}
+          labels: org.opencontainers.image.revision=${{ github.sha }}
+
+  deploy:
+    name: Deploy ${{ github.event_name == 'push' && (github.ref_name == 'main' && 'prod' || 'dev') || 'dev' }}
+    needs: [checks, publish]
+    if: >-
+      ${{
+        vars.DEPLOY_ACCESS_READY == 'true' &&
+        needs.checks.result == 'success' && needs.publish.result == 'success' &&
+        ((github.event_name == 'push' &&
+          (github.ref_name == 'main' || github.ref_name == vars.DEV_BRANCH)) ||
+         (github.event_name == 'workflow_dispatch' &&
+          inputs.dev_branch != '' && inputs.dev_branch != 'main' &&
+          github.ref_name == inputs.dev_branch &&
+          inputs.dev_branch == vars.DEV_BRANCH))
+      }}
+    concurrency:
+      group: fruitbox-deploy-${{ github.ref_name == 'main' && 'prod' || 'dev' }}
+      cancel-in-progress: false
+    timeout-minutes: 15
+    runs-on: ubuntu-24.04-arm
+    environment:
+      name: ${{ github.event_name == 'push' && (github.ref_name == 'main' && 'prod' || 'dev') || 'dev' }}
+    permissions:
+      contents: read
+      packages: read
+    steps:
+      - name: Validate deployment configuration and selected revision
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+          EXPECTED_BRANCH: ${{ github.ref_name == 'main' && 'main' || vars.DEV_BRANCH }}
+          INPUT_BRANCH: ${{ inputs.dev_branch }}
+          SELECTED_BRANCH: ${{ vars.DEV_BRANCH }}
+          EXPECTED_SHA: ${{ github.sha }}
+        run: |
+          # Destination fields are secrets so GitHub masks them before
+          # printing the step environment, not merely after this script starts.
+          if [ -n "$DEPLOY_HOST" ]; then printf '::add-mask::%s\n' "$DEPLOY_HOST"; fi
+          if [ -n "$DEPLOY_USER" ]; then printf '::add-mask::%s\n' "$DEPLOY_USER"; fi
+          for value in DEPLOY_HOST DEPLOY_USER DEPLOY_KEY DEPLOY_KNOWN_HOSTS; do
+            test -n "${!value}" || { echo "Missing deployment configuration: $value" >&2; exit 1; }
+          done
+          test "$EXPECTED_BRANCH" = "$GITHUB_REF_NAME"
+          if [ "$EXPECTED_BRANCH" != main ]; then
+            # The environment branch policy is the live selection gate.
+            # GITHUB_TOKEN cannot read repository variable values via REST.
+            test "$SELECTED_BRANCH" = "$EXPECTED_BRANCH"
+            test "$INPUT_BRANCH" = '' -o "$INPUT_BRANCH" = "$EXPECTED_BRANCH"
+          fi
+          encoded_branch=${EXPECTED_BRANCH//\//%2F}
+          remote_sha=$(gh api "repos/$GITHUB_REPOSITORY/branches/$encoded_branch" --jq .commit.sha)
+          test "$remote_sha" = "$EXPECTED_SHA" || { echo 'Branch advanced while this run was queued' >&2; exit 1; }
+      - name: Connect to tagged ephemeral tailnet
+        uses: tailscale/github-action@064b10558093f38325e838ddea35486bdc6b1d5c # v4
+        with:
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
+          tags: ${{ vars.TS_DEPLOY_TAGS || 'tag:fruitbox-ci' }}
+      - name: Deploy by immutable digest
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+          REGISTRY_USER: ${{ github.actor }}
+          REGISTRY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DEPLOY_ENV: ${{ github.ref_name == 'main' && 'prod' || 'dev' }}
+          IMAGE: ghcr.io/${{ github.repository }}@${{ needs.publish.outputs.digest }}
+          REVISION: ${{ github.sha }}
+        run: |
+          set -eu
+          cleanup() { rm -f "$RUNNER_TEMP/ssh/id_ed25519" "$RUNNER_TEMP/ssh/known_hosts"; }
+          trap cleanup EXIT
+          if [ -n "$DEPLOY_HOST" ]; then printf '::add-mask::%s\n' "$DEPLOY_HOST"; fi
+          if [ -n "$DEPLOY_USER" ]; then printf '::add-mask::%s\n' "$DEPLOY_USER"; fi
+          install -m 700 -d "$RUNNER_TEMP/ssh"
+          install -m 600 /dev/null "$RUNNER_TEMP/ssh/id_ed25519"
+          printf '%s' "$DEPLOY_KEY" > "$RUNNER_TEMP/ssh/id_ed25519"
+          install -m 600 /dev/null "$RUNNER_TEMP/ssh/known_hosts"
+          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > "$RUNNER_TEMP/ssh/known_hosts"
+          python3 -c 'import json, os, sys; json.dump({"registry_user": os.environ["REGISTRY_USER"], "registry_token": os.environ["REGISTRY_TOKEN"]}, sys.stdout)' |
+          ssh -i "$RUNNER_TEMP/ssh/id_ed25519" \
+            -o BatchMode=yes -o ConnectTimeout=15 -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes \
+            -o UserKnownHostsFile="$RUNNER_TEMP/ssh/known_hosts" \
+            "$DEPLOY_USER@$DEPLOY_HOST" deploy "$DEPLOY_ENV" "$IMAGE" "$REVISION"

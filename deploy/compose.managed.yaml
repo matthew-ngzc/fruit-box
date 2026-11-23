@@ -1,0 +1,31 @@
+name: ${FRUITBOX_COMPOSE_PROJECT:?FRUITBOX_COMPOSE_PROJECT is required}
+
+services:
+  game:
+    image: ${FRUITBOX_IMAGE:?FRUITBOX_IMAGE is required}
+    platform: linux/arm64
+    environment:
+      NODE_OPTIONS: --max-old-space-size=128
+    init: true
+    restart: unless-stopped
+    stop_grace_period: 10s
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 256m
+    cpus: 1.0
+    pids_limit: 128
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:2567/').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 3s
+      start_period: 10s
+      retries: 3
+    networks:
+      proxy:
+        aliases:
+          - ${FRUITBOX_NETWORK_ALIAS:?FRUITBOX_NETWORK_ALIAS is required}
+
+networks:
+  proxy:
+    external: true

@@ -1,0 +1,4 @@
+services:
+  game:
+    ports:
+      - "${FRUITBOX_DEV_BIND:?FRUITBOX_DEV_BIND is required}:2568:2567"
