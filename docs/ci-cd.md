@@ -8,6 +8,8 @@ GitHub Actions tests Fruit Box on hosted runners and builds ARM64 images for the
 
 [Deploy](../.github/workflows/deploy.yml) runs for `main`, the selected `DEV_BRANCH`, or an explicit manual dev run matching that selection. It calls the same CI workflow for the exact revision being delivered. Only successful checks permit a native ARM64 build and GHCR publish. Images carry the full source SHA as an OCI revision label and are deployed by digest, never by a mutable `latest` tag. There is no self-hosted GitHub runner on the game host.
 
+Live deployment is skipped until the repository variable `DEPLOY_ACCESS_READY` is `true`; tests and publishing still run. The setup wizard enables it after storing Tailscale credentials.
+
 The deploy job enters the appropriate GitHub environment, checks the current branch revision, joins Tailscale as an ephemeral `tag:fruitbox-ci` node, and connects through ordinary OpenSSH. Separate forced-command keys accept only a pinned Fruit Box image and source SHA for their own environment. The host also verifies ARM64 architecture and the image's revision label. A short-lived, read-only workflow token is sent over SSH stdin for private GHCR pulls and kept only in a temporary Docker credential directory.
 
 ```mermaid
@@ -60,12 +62,13 @@ The wizard guides the operator through the Tailscale policy and OAuth client ste
 
 | Environment setting | Storage | Purpose |
 | --- | --- | --- |
-| `DEPLOY_HOST`, `DEPLOY_USER` | Environment variables | Private deployment destination; masked before workflow use |
+| `DEPLOY_HOST`, `DEPLOY_USER` | Environment secrets | Private deployment destination; masked before any step environment is printed |
 | `TS_DEPLOY_TAGS` | Environment variable | `tag:fruitbox-ci` identity |
 | `DEPLOY_SSH_KEY` | Environment secret | Forced-command key for this environment |
 | `DEPLOY_KNOWN_HOSTS` | Environment secret | Locally verified SSH host key |
 | `TS_OAUTH_CLIENT_ID`, `TS_OAUTH_SECRET` | Environment secrets | Temporary Tailscale connection |
 | `DEV_BRANCH` | Repository variable | Current shared dev selection |
+| `DEPLOY_ACCESS_READY` | Repository variable | `false` until Tailscale authorization; gates live deployment only |
 
 The installer permits only `main` in the prod environment and only the selected branch in dev. No required reviewer is added, so reviewed main changes can deploy automatically. Never store production deployment credentials as general repository secrets accessible to unrelated PR jobs.
 

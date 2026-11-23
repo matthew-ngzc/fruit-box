@@ -217,5 +217,6 @@ for DEPLOY_ENVIRONMENT in dev prod; do
   say "Stored OAuth credentials in the $DEPLOY_ENVIRONMENT GitHub environment."
 done
 unset TS_OAUTH_SECRET TS_OAUTH_CLIENT_ID
+gh variable set DEPLOY_ACCESS_READY --repo "$REPOSITORY" --body true
 say "Tell your agent setup is complete so it can verify a deployment. No game was restarted by this wizard."
 finish

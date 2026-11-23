@@ -89,12 +89,17 @@ def main():
         existing = existing.rstrip("\n") + "\n" + line + "\n"
         authorized.write_text(existing)
         authorized.chmod(0o600)
-        for name, value in [("DEPLOY_SSH_KEY", key.read_text()), ("DEPLOY_KNOWN_HOSTS", known_hosts)]:
+        for name, value in [("DEPLOY_SSH_KEY", key.read_text()), ("DEPLOY_KNOWN_HOSTS", known_hosts),
+                            ("DEPLOY_HOST", address), ("DEPLOY_USER", account)]:
             run(["gh", "secret", "set", name, "--repo", REPO, "--env", environment], input=value)
-        for name, value in [("DEPLOY_HOST", address), ("DEPLOY_USER", account), ("TS_DEPLOY_TAGS", "tag:fruitbox-ci")]:
+        for name, value in [("TS_DEPLOY_TAGS", "tag:fruitbox-ci")]:
             run(["gh", "variable", "set", name, "--repo", REPO, "--env", environment, "--body", value])
         print(f"Provisioned {environment}: restricted SSH key, pinned host key and branch policy.")
     run(["gh", "variable", "set", "DEV_BRANCH", "--repo", REPO, "--body", args.dev_branch])
+    # Preserve an already authorized installation; first setup is disabled.
+    variables = api("actions/variables")["variables"]
+    if not any(item["name"] == "DEPLOY_ACCESS_READY" for item in variables):
+        run(["gh", "variable", "set", "DEPLOY_ACCESS_READY", "--repo", REPO, "--body", "false"])
     print("Host commands installed. No running game was changed. Configure Tailscale OAuth next.")
 
 

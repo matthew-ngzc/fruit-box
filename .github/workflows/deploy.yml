@@ -71,6 +71,7 @@ jobs:
     needs: [checks, publish]
     if: >-
       ${{
+        vars.DEPLOY_ACCESS_READY == 'true' &&
         needs.checks.result == 'success' && needs.publish.result == 'success' &&
         ((github.event_name == 'push' &&
           (github.ref_name == 'main' || github.ref_name == vars.DEV_BRANCH)) ||
@@ -88,14 +89,13 @@ jobs:
       name: ${{ github.event_name == 'push' && (github.ref_name == 'main' && 'prod' || 'dev') || 'dev' }}
     permissions:
       contents: read
-      actions: read
       packages: read
     steps:
       - name: Validate deployment configuration and selected revision
         env:
           GH_TOKEN: ${{ github.token }}
-          DEPLOY_HOST: ${{ vars.DEPLOY_HOST }}
-          DEPLOY_USER: ${{ vars.DEPLOY_USER }}
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
           DEPLOY_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
           DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
           EXPECTED_BRANCH: ${{ github.ref_name == 'main' && 'main' || vars.DEV_BRANCH }}
@@ -103,8 +103,8 @@ jobs:
           SELECTED_BRANCH: ${{ vars.DEV_BRANCH }}
           EXPECTED_SHA: ${{ github.sha }}
         run: |
-          # Host and user are repository variables, so mask them explicitly;
-          # GitHub already masks the multiline secret values.
+          # Destination fields are secrets so GitHub masks them before
+          # printing the step environment, not merely after this script starts.
           if [ -n "$DEPLOY_HOST" ]; then printf '::add-mask::%s\n' "$DEPLOY_HOST"; fi
           if [ -n "$DEPLOY_USER" ]; then printf '::add-mask::%s\n' "$DEPLOY_USER"; fi
           for value in DEPLOY_HOST DEPLOY_USER DEPLOY_KEY DEPLOY_KNOWN_HOSTS; do
@@ -112,8 +112,9 @@ jobs:
           done
           test "$EXPECTED_BRANCH" = "$GITHUB_REF_NAME"
           if [ "$EXPECTED_BRANCH" != main ]; then
-            current_selection=$(gh api "repos/$GITHUB_REPOSITORY/actions/variables/DEV_BRANCH" --jq .value)
-            test "$current_selection" = "$EXPECTED_BRANCH" || { echo 'DEV_BRANCH changed while this run was queued' >&2; exit 1; }
+            # The environment branch policy is the live selection gate.
+            # GITHUB_TOKEN cannot read repository variable values via REST.
+            test "$SELECTED_BRANCH" = "$EXPECTED_BRANCH"
             test "$INPUT_BRANCH" = '' -o "$INPUT_BRANCH" = "$EXPECTED_BRANCH"
           fi
           encoded_branch=${EXPECTED_BRANCH//\//%2F}
@@ -127,8 +128,8 @@ jobs:
           tags: ${{ vars.TS_DEPLOY_TAGS || 'tag:fruitbox-ci' }}
       - name: Deploy by immutable digest
         env:
-          DEPLOY_HOST: ${{ vars.DEPLOY_HOST }}
-          DEPLOY_USER: ${{ vars.DEPLOY_USER }}
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
           DEPLOY_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
           DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
           REGISTRY_USER: ${{ github.actor }}
