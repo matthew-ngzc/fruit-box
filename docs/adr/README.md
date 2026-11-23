@@ -29,7 +29,9 @@ Store an ADR's pictures, exported diagrams, and recordings in `../assets/adr-NNN
 | 0004 | [Confirm clears and permit rejoin until finish](0004-confirm-clears-and-rejoin.md) | Accepted | 2026-10-29 | [adr-0004](../assets/adr-0004/) | [Gameplay](../versus-gameplay.md), [issue 13](https://github.com/matthew-ngzc/fruit-box/issues/13) |
 | 0005 | [Keep rematches in the same room with participant consent](0005-rematch-in-the-same-room.md) | Accepted | 2026-10-30 | [adr-0005](../assets/adr-0005/) | [Gameplay](../versus-gameplay.md), [issue 21](https://github.com/matthew-ngzc/fruit-box/issues/21) |
 
-TypeScript/Colyseus is accepted. The initial hosting route remains open in [issue 4](https://github.com/matthew-ngzc/fruit-box/issues/4). Historical research recommendations do not supersede accepted ADRs.
+| 0006 | [Separate branch-selected dev and main-only production](0006-dev-and-prod-deployments.md) | Accepted | 2026-11-23 | [adr-0006](../assets/adr-0006/) | [CI/CD](../ci-cd.md), [issue 7](https://github.com/matthew-ngzc/fruit-box/issues/7) |
+
+TypeScript/Colyseus and the Docker/Tailscale deployment route are accepted. [Issue 4](https://github.com/matthew-ngzc/fruit-box/issues/4) retains hosting/capacity verification. Historical research recommendations do not supersede accepted ADRs.
 
 ## When and how to record a decision
 

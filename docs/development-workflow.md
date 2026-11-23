@@ -4,7 +4,7 @@ GitHub Issues is the work tracker. GitHub PRs are the unit of delivery. The `gh`
 
 ## Shape before implementation
 
-`CONTEXT.md` defines domain terms; `docs/design-session.md` distinguishes confirmed rules from open decisions; `docs/adr/` records consequential choices. Research notes are evidence, not automatically accepted architecture. TypeScript/Node/Colyseus is accepted in ADR 0003; the deployment route remains undecided.
+`CONTEXT.md` defines domain terms; `docs/design-session.md` distinguishes confirmed rules from open decisions; `docs/adr/` records consequential choices. Research notes are evidence, not automatically accepted architecture. TypeScript/Node/Colyseus is accepted in ADR 0003; the Docker/Tailscale dev/prod deployment route is accepted in ADR 0006; see [CI/CD](ci-cd.md) for setup and runtime verification.
 
 Synthesize agreed behavior into the parent specification issue. Extract small implementation issues that deliver observable behavior across the necessary layers. For example, prefer "two guests join a room and see the same board" over separate tickets for database schema, backend endpoints, and frontend components. Exploratory prototypes and decision tickets are appropriate when an implementation choice is unresolved.
 

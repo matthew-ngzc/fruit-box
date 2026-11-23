@@ -1,6 +1,6 @@
 # Fruit Box research and design
 
-Research date: 29 October 2026 (Singapore time). The TypeScript/Colyseus browser match is playable locally; physical iPhone/Android acceptance and hosting remain pending.
+Research date: 29 October 2026 (Singapore time). The TypeScript/Colyseus browser match is playable locally; physical iPhone/Android acceptance remains pending. The selected Docker host supports [dev/prod CI/CD](ci-cd.md), with deployment authorization and production cutover tracked separately.
 
 1. [Repository and deployment](research/repository.md): inspected commit, game engine, generator, UI, running instructions, docs, tests, license, and limits of the public repo's relationship to the live site.
 2. [Origins and board generation](research/origins-and-generation.md): original 2007 release, 2019 HTML5 update, newer 2026 project dates, and exact generator comparison.
@@ -14,7 +14,7 @@ Research date: 29 October 2026 (Singapore time). The TypeScript/Colyseus browser
 10. [ADR register](adr/README.md): decision status, rationale, ownership, and supersession.
 11. [Documentation maintenance](doc-maintenance.md): owning pages, canonical diagrams, and navigation.
 12. [ADR media](assets/README.md): pictures and recordings in per-ADR folders beside `adr/`.
-13. [CI/CD](ci-cd.md): real current checks, accepted automatic-delivery policy, and remaining deployment prerequisites.
+13. [CI/CD](ci-cd.md): checks, dev branch selection, ARM64 delivery, deployment setup and rollback.
 
 14. [Private versus rooms](versus-rooms.md): setup, public state, real-client demo and implementation limits.
 15. [TypeScript/Colyseus ADR](adr/0003-typescript-colyseus.md): accepted stack and rules/room ownership.
@@ -25,7 +25,7 @@ Research date: 29 October 2026 (Singapore time). The TypeScript/Colyseus browser
 - [Stacked PR dependencies and restacking](development-workflow.md#stacked-pr-delivery).
 - [ADR lifecycle](adr/README.md#when-and-how-to-record-a-decision).
 - [Proposed system components](research/architecture-and-modes.md#proposed-components); historical proposal; see ADR 0003 for the accepted stack.
-- [CI gates and future deployment boundary](ci-cd.md#implemented-ci).
+- [CI gates and deployment boundary](ci-cd.md#implemented-ci).
 
 [CONTEXT.md](../CONTEXT.md) contains the game's domain glossary. Source links in the reports point to the inspected upstream commit; the first implementation vendors the pinned MIT engine with [provenance](../vendor/fruit-box-game/README.md).
 

@@ -1,6 +1,6 @@
 # Temporary friend hosting through Cloudflare Tunnel and Caddy
 
-This is a manual hosting profile for the owner's requested Mac/Pi4 route, not automatic deployment or acceptance of the open PR stack. Review and run the security-fix branch including its prerequisites. Keep the service stopped until the host checks below pass. A tunnel provides connectivity; the hostname is public unless an access policy restricts it.
+This is the earlier manual hosting profile for the owner's requested Mac/Pi4 route. Managed dev/prod deployment is documented in [CI/CD](ci-cd.md); configuring it does not accept or merge the open PR stack. Review and run the security-fix branch including its prerequisites. Keep the service stopped until the host checks below pass. A tunnel provides connectivity; the hostname is public unless an access policy restricts it.
 
 ## Same-host setup
 

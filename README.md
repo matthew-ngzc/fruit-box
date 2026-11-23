@@ -2,7 +2,7 @@
 
 A personal Fruit Box project exploring solo play and real-time competition between friends on a shared board, accessible from iPhone and Android browsers.
 
-TypeScript, Node and Colyseus are accepted. The local browser implementation supports solo play and a timed two-player shared-board match with authoritative clears, scores, pauses and reconnection. See [playable versus setup](docs/versus-gameplay.md); physical-phone acceptance remains pending. For a visible start/stop control in Docker Desktop, use [local Docker setup](docs/local-docker.md). For the requested manual Mac/Pi4 tunnel route, use [temporary hosting and security checks](docs/temporary-hosting.md); actual host clearance and automatic deployment remain pending.
+TypeScript, Node and Colyseus are accepted. The local browser implementation supports solo play and a timed two-player shared-board match with authoritative clears, scores, pauses and reconnection. See [playable versus setup](docs/versus-gameplay.md); physical-phone acceptance remains pending. For a visible start/stop control in Docker Desktop, use [local Docker setup](docs/local-docker.md). For manual Mac/Pi4 hosting, use [temporary hosting and security checks](docs/temporary-hosting.md). [CI/CD](docs/ci-cd.md) configures branch-selected dev and main-only production deployments; Tailscale authorization and the first production cutover require operator setup.
 
 ## Continue with an agent
 
