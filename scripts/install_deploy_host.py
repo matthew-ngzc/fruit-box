@@ -35,7 +35,9 @@ def main():
     args = parser.parse_args()
     os.umask(0o077)
     run(["gh", "auth", "status"])
-    run(["docker", "info", "--format", "{{.Architecture}}"])
+    architecture = run(["docker", "info", "--format", "{{.Architecture}}"]).strip().lower()
+    if architecture not in {"aarch64", "arm64"}:
+        parser.error("deployment host must run ARM64 Docker")
     run(["git", "check-ref-format", "--branch", args.dev_branch])
     if args.dev_branch == "main":
         parser.error("dev must select an unmerged PR branch, not main")
